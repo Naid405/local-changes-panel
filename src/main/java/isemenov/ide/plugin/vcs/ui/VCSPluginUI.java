@@ -88,7 +88,7 @@ public class VCSPluginUI implements PluginUI {
                     integrationPlugin.removeFile(file.getFile());
                     integrationPlugin.refreshFileStatus(file.getFile());
                 } catch (Exception e) {
-                    logger.warn("Error occured while removing file " + file.getFile().getFilePath(),
+                    logger.warn("Error occured while removing file " + file.getFile(),
                                 e);
                 }
                 return null;
@@ -105,7 +105,7 @@ public class VCSPluginUI implements PluginUI {
                     integrationPlugin.revertFileChanges(file.getFile());
                     integrationPlugin.refreshFileStatus(file.getFile());
                 } catch (Exception e) {
-                    logger.warn("Error occured while reverting changes for file " + file.getFile().getFilePath(),
+                    logger.warn("Error occured while reverting changes for file " + file.getFile(),
                                 e);
                 }
                 return null;
@@ -121,7 +121,7 @@ public class VCSPluginUI implements PluginUI {
                 try {
                     integrationPlugin.refreshFileStatus(file.getFile());
                 } catch (Exception e) {
-                    logger.warn("Error occured while refreshing status for file " + file.getFile().getFilePath(),
+                    logger.warn("Error occured while refreshing status for file " + file.getFile(),
                                 e);
                 }
                 return null;
@@ -168,6 +168,7 @@ public class VCSPluginUI implements PluginUI {
         toolBar1.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         mainPanel.add(toolBar1, BorderLayout.WEST);
         refreshButton = new JButton();
+        refreshButton.setFocusable(false);
         refreshButton.setIcon(new ImageIcon(getClass().getResource("/icons/refresh-button.png")));
         refreshButton.setText("");
         refreshButton.setToolTipText("Refresh");

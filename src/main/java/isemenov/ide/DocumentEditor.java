@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -26,21 +27,21 @@ public final class DocumentEditor {
 
     private volatile boolean documentChanged;
 
-    public DocumentEditor(EditorKit editorKit, ProjectFile file) {
+    public DocumentEditor(EditorKit editorKit, Path filePath) {
         Objects.requireNonNull(editorKit);
-        Objects.requireNonNull(file);
+        Objects.requireNonNull(filePath);
 
         this.eventManager = new ConcurrentEventManager();
 
         this.editorKit = editorKit;
         this.document = editorKit.createDefaultDocument();
-        this.document.putProperty(Document.StreamDescriptionProperty, file);
+        this.document.putProperty(Document.StreamDescriptionProperty, filePath);
         this.documentChangeListener = new AsyncChangeNotifyingDocumentListener(e -> {
             if (!this.documentChanged) {
                 this.documentChanged = true;
                 this.eventManager.fireEventListeners(this,
                                                      new DocumentChangedEvent(
-                                                             (ProjectFile) document.getProperty(
+                                                             (Path) document.getProperty(
                                                                      Document.StreamDescriptionProperty),
                                                              this,
                                                              this.document));
@@ -58,8 +59,8 @@ public final class DocumentEditor {
 
     public void readDocument() throws IOException {
         synchronized (document) {
-            ProjectFile file = (ProjectFile) document.getProperty(Document.StreamDescriptionProperty);
-            try (Reader reader = Files.newBufferedReader(file.getFilePath())) {
+            Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
+            try (Reader reader = Files.newBufferedReader(file)) {
                 //To not fire the file change events since technically file is unchanged after it's read
                 document.removeDocumentListener(documentChangeListener);
                 //Otherwise kit.read attaches to the end of document TODO: try to avoid
@@ -80,12 +81,12 @@ public final class DocumentEditor {
 
     public void writeDocument() throws IOException {
         synchronized (document) {
-            ProjectFile file = (ProjectFile) document.getProperty(Document.StreamDescriptionProperty);
+            Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
             this.eventManager.fireEventListeners(this,
                                                  new DocumentBeingSavedEvent(file,
                                                                              this,
                                                                              this.document));
-            try (Writer writer = Files.newBufferedWriter(file.getFilePath())) {
+            try (Writer writer = Files.newBufferedWriter(file)) {
                 this.editorKit.write(writer, this.document, 0, document.getLength());
                 documentChanged = false;
                 this.eventManager.fireEventListeners(this,

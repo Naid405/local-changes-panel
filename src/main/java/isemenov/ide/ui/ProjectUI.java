@@ -1,50 +1,23 @@
 package isemenov.ide.ui;
 
-import isemenov.ide.FileTreeNode;
 import isemenov.ide.Project;
-import isemenov.ide.ProjectFileReadingException;
-import isemenov.ide.ui.action.JTreeNodeDoubleClickMouseAdapter;
 import isemenov.ide.ui.component.ApplicationUIMenu;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ProjectUI {
-    private static final Logger logger = LogManager.getLogger(ProjectUI.class);
-
-    private final Project project;
-
     private JPanel mainPanel;
-    private JTree fileTree;
-    private JPanel fileEditorPanel;
+    private JButton refreshTreeButton;
 
     public ProjectUI(ApplicationUIMenu applicationMenu, Project project) {
-        this.project = project;
-
-        fileTree.addMouseListener(new JTreeNodeDoubleClickMouseAdapter(this::openTreeNodeFile));
-        fileTree.setModel(project.getFileTreeModel());
-
         TabbedFileEditorUI editorView = new TabbedFileEditorUI(applicationMenu, project.getFileEditor());
-        fileEditorPanel.add(editorView.$$$getRootComponent$$$());
-    }
-
-    public void openTreeNodeFile(Object treeNode) {
-        FileTreeNode fileTreeNode = (FileTreeNode) treeNode;
-
-        if (fileTreeNode == null || fileTreeNode.getAllowsChildren()) return;
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    project.openFileInEditor(fileTreeNode.getFile());
-                } catch (ProjectFileReadingException e) {
-                    logger.error(e.getMessage(), e);
-                }
-                return null;
-            }
-        }.execute();
+        mainPanel.add(editorView.$$$getRootComponent$$$(), BorderLayout.CENTER);
+        refreshTreeButton.addActionListener(e -> project.refreshProjectFiles());
     }
 
     {
@@ -64,16 +37,13 @@ public class ProjectUI {
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout(0, 0));
-        final JSplitPane splitPane1 = new JSplitPane();
-        mainPanel.add(splitPane1, BorderLayout.CENTER);
-        final JScrollPane scrollPane1 = new JScrollPane();
-        splitPane1.setLeftComponent(scrollPane1);
-        fileTree = new JTree();
-        fileTree.setPreferredSize(new Dimension(150, 0));
-        scrollPane1.setViewportView(fileTree);
-        fileEditorPanel = new JPanel();
-        fileEditorPanel.setLayout(new BorderLayout(0, 0));
-        splitPane1.setRightComponent(fileEditorPanel);
+        final JToolBar toolBar1 = new JToolBar();
+        toolBar1.setFloatable(false);
+        mainPanel.add(toolBar1, BorderLayout.NORTH);
+        refreshTreeButton = new JButton();
+        refreshTreeButton.setFocusable(false);
+        refreshTreeButton.setText("Refresh File Tree");
+        toolBar1.add(refreshTreeButton);
     }
 
     /**

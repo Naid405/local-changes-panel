@@ -1,10 +1,11 @@
 package isemenov.ide.ui;
 
 import isemenov.ide.DocumentEditor;
-import isemenov.ide.MultipleProjectFileEditor;
-import isemenov.ide.ProjectFile;
+import isemenov.ide.FileEditor;
+import isemenov.ide.FileReadingException;
 import isemenov.ide.event.editor.EditorFileClosedEvent;
 import isemenov.ide.event.editor.EditorFileOpenedEvent;
+import isemenov.ide.ui.action.JTreeNodeDoubleClickMouseAdapter;
 import isemenov.ide.ui.component.ApplicationUIMenu;
 import isemenov.ide.ui.component.CloseableChangeDisplayingTab;
 import org.apache.logging.log4j.LogManager;
@@ -13,21 +14,44 @@ import org.apache.logging.log4j.Logger;
 import javax.swing.*;
 import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public class TabbedFileEditorUI {
     private static final Logger logger = LogManager.getLogger(TabbedFileEditorUI.class);
 
-    private final MultipleProjectFileEditor fileEditor;
+    private final FileEditor fileEditor;
 
     private JPanel mainPanel;
     private JTabbedPane tabbedPane;
+    private JTree fileTree;
 
     public TabbedFileEditorUI(ApplicationUIMenu applicationMenu,
-                              MultipleProjectFileEditor fileEditor) {
+                              FileEditor fileEditor) {
         this.fileEditor = fileEditor;
+
+        fileTree.addMouseListener(new JTreeNodeDoubleClickMouseAdapter(treeNode -> {
+            DefaultMutableTreeNode fileTreeNode = (DefaultMutableTreeNode) treeNode;
+
+            if (fileTreeNode == null || fileTreeNode.getAllowsChildren()) return;
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        Path filePath = (Path) fileTreeNode.getUserObject();
+                        fileEditor.openFile(filePath);
+                        fileEditor.readOpenedFileContent(filePath);
+                    } catch (FileReadingException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                    return null;
+                }
+            }.execute();
+        }));
+        fileTree.setModel(fileEditor.getFileTreeModel());
 
         fileEditor.addFileOpenedListener(this::handleFileEditorOpened);
         fileEditor.addFileClosedListener(this::handleFileEditorClosed);
@@ -76,13 +100,13 @@ public class TabbedFileEditorUI {
         SwingUtilities.invokeLater(
                 () ->
                         this.openEditorTab(
-                                fileOpenedEvent.getProjectFile().toString(),
+                                fileOpenedEvent.getFile().getFileName().toString(),
                                 documentEditor.getEditorKit(),
                                 documentEditor.getDocument(),
                                 (e) -> new SwingWorker<Void, Void>() {
                                     @Override
                                     protected Void doInBackground() throws Exception {
-                                        fileEditor.closeFile(fileOpenedEvent.getProjectFile());
+                                        fileEditor.closeFile(fileOpenedEvent.getFile());
                                         return null;
                                     }
                                 }.execute()
@@ -101,7 +125,7 @@ public class TabbedFileEditorUI {
         if (!fileEditor.hasOpenFiles())
             return;
         Document document = ((JTextPane) ((JScrollPane) tabbedPane.getSelectedComponent()).getViewport().getView()).getDocument();
-        ProjectFile file = (ProjectFile) document.getProperty(Document.StreamDescriptionProperty);
+        Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -156,8 +180,18 @@ public class TabbedFileEditorUI {
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout(0, 0));
+        final JSplitPane splitPane1 = new JSplitPane();
+        mainPanel.add(splitPane1, BorderLayout.CENTER);
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new BorderLayout(0, 0));
+        panel1.setPreferredSize(new Dimension(150, 0));
+        splitPane1.setLeftComponent(panel1);
+        final JScrollPane scrollPane1 = new JScrollPane();
+        panel1.add(scrollPane1, BorderLayout.CENTER);
+        fileTree = new JTree();
+        scrollPane1.setViewportView(fileTree);
         tabbedPane = new JTabbedPane();
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        splitPane1.setRightComponent(tabbedPane);
     }
 
     /**

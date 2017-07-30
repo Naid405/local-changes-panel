@@ -1,7 +1,5 @@
 package isemenov.ide.plugin.vcs;
 
-import isemenov.ide.ProjectFile;
-
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,7 +25,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
         return projectFileStatuses.get(index);
     }
 
-    synchronized void updateUnsavedStatusForFile(ProjectFile file, boolean unsaved) {
+    synchronized void updateUnsavedStatusForFile(Path file, boolean unsaved) {
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {
@@ -39,7 +37,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
         }
     }
 
-    synchronized void updateVCSStatusForFile(ProjectFile file, VCSFileStatus status) {
+    synchronized void updateVCSStatusForFile(Path file, VCSFileStatus status) {
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {
@@ -56,17 +54,11 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
             return;
         for (int i = 0; i < this.getSize(); i++) {
             ProjectFileVCSStatus fileStatus = this.getElementAt(i);
-            Path path = fileStatus.getFile().getFilePath();
+            Path path = fileStatus.getFile();
             VCSFileStatus newStatus = statusMap.get(path);
+            //To get status for files under ignored directories
             if (newStatus == null) {
-                do {
-                    path = path.getParent();
-                    newStatus = statusMap.get(path);
-                    if (newStatus != null)
-                        break;
-                } while (path != null);
-                if (newStatus == null)
-                    newStatus = VCSFileStatus.UNCHANGED;
+                newStatus = VCSFileStatus.UNCHANGED;
             }
 
 
@@ -78,7 +70,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
     }
 
     @SuppressWarnings("SameParameterValue")
-    synchronized void addProjectFileStatus(ProjectFile file, VCSFileStatus status, boolean unsaved) {
+    synchronized void addProjectFileStatus(Path file, VCSFileStatus status, boolean unsaved) {
         for (ProjectFileVCSStatus fileStatus : projectFileStatuses) {
             if (fileStatus.getFile().equals(file))
                 return;

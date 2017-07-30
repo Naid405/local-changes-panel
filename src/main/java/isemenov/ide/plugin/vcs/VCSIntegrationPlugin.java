@@ -1,12 +1,12 @@
 package isemenov.ide.plugin.vcs;
 
 import isemenov.ide.Project;
-import isemenov.ide.ProjectFile;
 import isemenov.ide.event.editor.ProjectFileEventsListener;
 import isemenov.ide.plugin.IDEPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -61,41 +61,41 @@ public class VCSIntegrationPlugin implements IDEPlugin {
 
     }
 
-    public void refreshFileStatus(ProjectFile file) throws VCSException {
+    public void refreshFileStatus(Path file) throws VCSException {
         projectChangeLock.readLock().lock();
         try {
             if (vcsService == null)
                 return;
 
-            fileStatusesList.updateVCSStatusForFile(file, vcsService.getStatus(file.getFilePath()));
+            fileStatusesList.updateVCSStatusForFile(file, vcsService.getStatus(file));
         } finally {
             projectChangeLock.readLock().unlock();
         }
 
     }
 
-    public void removeFile(ProjectFile file) throws VCSException {
+    public void removeFile(Path file) throws VCSException {
         projectChangeLock.readLock().lock();
         try {
             if (vcsService == null)
                 return;
 
             project.getFileEditor().closeFile(file);
-            vcsService.removeFile(file.getFilePath());
-            project.readFileTree();
+            vcsService.removeFile(file);
+            project.refreshProjectFiles();
         } finally {
             projectChangeLock.readLock().unlock();
         }
     }
 
-    public void revertFileChanges(ProjectFile file) throws VCSException {
+    public void revertFileChanges(Path file) throws VCSException {
         projectChangeLock.readLock().lock();
         try {
             if (vcsService == null)
                 return;
 
-            vcsService.revertFileChanges(file.getFilePath());
-            project.readFileTree();
+            vcsService.revertFileChanges(file);
+            project.refreshProjectFiles();
             project.getFileEditor().readOpenedFileContent(file);
         } finally {
             projectChangeLock.readLock().unlock();
@@ -112,7 +112,7 @@ public class VCSIntegrationPlugin implements IDEPlugin {
     public ProjectFileEventsListener getEditorEventsListener() {
         return new ProjectFileEventsListener() {
             @Override
-            public void projectFileOpened(ProjectFile file) {
+            public void projectFileOpened(Path file) {
                 if (vcsService == null)
                     return;
 
@@ -125,7 +125,7 @@ public class VCSIntegrationPlugin implements IDEPlugin {
             }
 
             @Override
-            public void projectFileClosed(ProjectFile file) {
+            public void projectFileClosed(Path file) {
                 if (vcsService == null)
                     return;
 
@@ -138,7 +138,7 @@ public class VCSIntegrationPlugin implements IDEPlugin {
             }
 
             @Override
-            public void projectFileChanged(ProjectFile file) {
+            public void projectFileChanged(Path file) {
                 if (vcsService == null)
                     return;
 
@@ -151,7 +151,7 @@ public class VCSIntegrationPlugin implements IDEPlugin {
             }
 
             @Override
-            public void projectFileSaved(ProjectFile file) {
+            public void projectFileSaved(Path file) {
                 if (vcsService == null)
                     return;
 

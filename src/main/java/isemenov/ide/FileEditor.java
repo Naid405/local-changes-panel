@@ -8,38 +8,48 @@ import isemenov.ide.event.editor.EditorFileOpenedEvent;
 import isemenov.ide.event.editor.EditorFileSavedEvent;
 
 import javax.swing.text.StyledEditorKit;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public final class MultipleProjectFileEditor {
-    private final Map<ProjectFile, DocumentEditor> openedFiles;
+public final class FileEditor {
+    private final Map<Path, DocumentEditor> openedFiles;
+    private final DefaultTreeModel fileTreeModel;
 
     private final EventManager eventManager;
 
-    public MultipleProjectFileEditor() {
+    public FileEditor() {
         this.openedFiles = new ConcurrentHashMap<>();
+        this.fileTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode(), true);
         this.eventManager = new ConcurrentEventManager();
+    }
+
+    public TreeModel getFileTreeModel() {
+        return fileTreeModel;
+    }
+
+    public void setFileTree(DefaultMutableTreeNode treeRoot) {
+        Objects.requireNonNull(treeRoot);
+        fileTreeModel.setRoot(treeRoot);
     }
 
     public boolean hasOpenFiles() {
         return !openedFiles.isEmpty();
     }
 
-    public boolean isFileOpen(ProjectFile file) {
-        Objects.requireNonNull(file);
-        return openedFiles.containsKey(file);
-    }
-
-    public void openFile(ProjectFile file) {
+    public void openFile(Path file) {
         Objects.requireNonNull(file);
 
         if (openedFiles.containsKey(file))
             return;
 
-        DocumentEditor documentEditor = new DocumentEditor(new StyledEditorKit(), file);
+        DocumentEditor documentEditor = new DocumentEditor(new StyledEditorKit(), file.toAbsolutePath());
 
         if (openedFiles.putIfAbsent(file, documentEditor) != documentEditor) {
             this.eventManager.fireEventListeners(this, new EditorFileOpenedEvent(file, documentEditor));
@@ -51,7 +61,7 @@ public final class MultipleProjectFileEditor {
         }
     }
 
-    public void readOpenedFileContent(ProjectFile file) {
+    public void readOpenedFileContent(Path file) {
         Objects.requireNonNull(file);
 
         DocumentEditor editor = openedFiles.get(file);
@@ -61,11 +71,11 @@ public final class MultipleProjectFileEditor {
         try {
             editor.readDocument();
         } catch (IOException e) {
-            throw new ProjectFileReadingException(file, e);
+            throw new FileReadingException(file, e);
         }
     }
 
-    public void saveFile(ProjectFile file) {
+    public void saveFile(Path file) {
         Objects.requireNonNull(file);
 
         DocumentEditor editor = openedFiles.get(file);
@@ -75,12 +85,12 @@ public final class MultipleProjectFileEditor {
         try {
             editor.writeDocument();
         } catch (IOException e) {
-            throw new ProjectFileSavingException(file, e);
+            throw new FileSavingException(file, e);
         }
         eventManager.fireEventListeners(this, new EditorFileSavedEvent(file, editor));
     }
 
-    public void closeFile(ProjectFile file) {
+    public void closeFile(Path file) {
         Objects.requireNonNull(file);
 
         DocumentEditor closed = openedFiles.remove(file);

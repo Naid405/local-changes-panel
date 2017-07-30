@@ -1,19 +1,19 @@
 package isemenov.ide.plugin.vcs;
 
-import isemenov.ide.ProjectFile;
+import java.nio.file.Path;
 
 public class ProjectFileVCSStatus {
-    private ProjectFile file;
+    private Path file;
     private VCSFileStatus vcsFileStatus;
     private boolean unsaved;
 
-    public ProjectFileVCSStatus(ProjectFile file, VCSFileStatus vcsFileStatus, boolean unsaved) {
+    public ProjectFileVCSStatus(Path file, VCSFileStatus vcsFileStatus, boolean unsaved) {
         this.file = file;
         this.vcsFileStatus = vcsFileStatus;
         this.unsaved = unsaved;
     }
 
-    public ProjectFile getFile() {
+    public Path getFile() {
         return file;
     }
 
@@ -31,6 +31,6 @@ public class ProjectFileVCSStatus {
 
     @Override
     public String toString() {
-        return file.getFilePath().toAbsolutePath().toString() + "  " + vcsFileStatus.toString() + "  " + (unsaved ? "*" : "");
+        return file.toAbsolutePath().toString() + "  " + vcsFileStatus.toString() + "  " + (unsaved ? "*" : "");
     }
 }

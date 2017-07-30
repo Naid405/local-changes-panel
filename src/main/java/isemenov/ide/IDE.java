@@ -43,10 +43,10 @@ public final class IDE {
         if (!projectDirectoryPath.isDirectory())
             throw new NotADirectoryException(rootPath);
 
-        MultipleProjectFileEditor editor = new MultipleProjectFileEditor();
+        FileEditor editor = new FileEditor();
 
         this.project = new Project(rootPath, editor);
-        this.project.readFileTree();
+        this.project.refreshProjectFiles();
 
         for (IDEPlugin plugin : plugins) {
             this.project.addProjectFileEventListener(plugin.getEditorEventsListener());

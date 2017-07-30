@@ -1,122 +1,110 @@
 package isemenov.ide.plugin.vcs.git;
 
 import isemenov.ide.plugin.vcs.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import isemenov.ide.util.CommandExecutionException;
+import isemenov.ide.util.ShellCommandExecutor;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 public class GitService implements VCSService {
-    private static final Logger logger = LogManager.getLogger(GitService.class);
+    private final ShellCommandExecutor commandExecutor;
+    private final Path workDirPath;
 
-    private final Path workingDirPath;
-
-    public GitService(Path workingDirPath) throws NotVCSRootException {
-        this.workingDirPath = workingDirPath;
-        if (!Files.exists(workingDirPath.resolve(".git"))) {
-            throw new NotVCSRootException(workingDirPath);
+    public GitService(ShellCommandExecutor commandExecutor, Path workDirPath) throws NotVCSRootException {
+        this.commandExecutor = commandExecutor;
+        this.workDirPath = workDirPath;
+        if (!Files.exists(workDirPath.resolve(".git"))) {
+            throw new NotVCSRootException(workDirPath);
         }
     }
 
     @Override
     public Map<Path, VCSFileStatus> getStatus() throws VCSException {
-        return Collections.unmodifiableMap(
-                executeGitCommand("git",
-                                  "status",
-                                  "--untracked-files=normal",
-                                  "--porcelain=1",
-                                  "--ignored").stream()
-                        .collect(Collectors.toMap(statusLine -> workingDirPath.resolve(statusLine.substring(3)),
-                                                  statusLine -> GitStatusConverter.convert(statusLine.charAt(0),
-                                                                                           statusLine.charAt(1))
-                        )));
+        Map<Path, VCSFileStatus> map = new HashMap<>();
+        try {
+            for (String statusLine : commandExecutor.executeCommand(workDirPath,
+                                                                    "git",
+                                                                    "status",
+                                                                    "--untracked-files=all",
+                                                                    "--porcelain=1",
+                                                                    "--ignored")) {
+
+                GitStatusLine gitStatusLine = GitStatusLine.parse(statusLine);
+                map.put(workDirPath.resolve(gitStatusLine.getFilePath()),
+                        GitStatusConverter.convert(gitStatusLine.getIndexStatus(),
+                                                   gitStatusLine.getWorkTreeStatus()));
+            }
+        } catch (CommandExecutionException e) {
+            throw new CannotExecuteVCSOperation(e);
+        }
+        return Collections.unmodifiableMap(map);
     }
 
     @Override
     public VCSFileStatus getStatus(Path filePath) throws VCSException {
-        List<String> result = executeGitCommand("git",
-                                                "status",
-                                                "--untracked-files=normal",
-                                                "--porcelain=1",
-                                                "--ignored",
-                                                getRelativeFilePath(filePath));
-        if (result.size() == 0)
-            return VCSFileStatus.UNCHANGED;
+        List<String> result;
+        try {
+            result = commandExecutor.executeCommand(workDirPath,
+                                                    "git",
+                                                    "status",
+                                                    "--untracked-files=all",
+                                                    "--porcelain=1",
+                                                    "--ignored",
+                                                    getRelativeFilePath(filePath));
+        } catch (CommandExecutionException e) {
+            throw new CannotExecuteVCSOperation(e);
+        }
+        return getStatusFromString(result.size() > 0 ? result.get(0) : null);
+    }
 
-        String statusLine = result.get(0);
-
-        return GitStatusConverter.convert(statusLine.charAt(0), statusLine.charAt(1));
+    private VCSFileStatus getStatusFromString(String statusLine) {
+        Character indexStatus;
+        Character workTreeStatus;
+        if (statusLine == null) {
+            indexStatus = ' ';
+            workTreeStatus = ' ';
+        } else {
+            indexStatus = statusLine.charAt(0);
+            workTreeStatus = statusLine.charAt(1);
+        }
+        return GitStatusConverter.convert(indexStatus, workTreeStatus);
     }
 
     @Override
     public void removeFile(Path filePath) throws VCSException {
-        executeGitCommand("git",
-                          "rm",
-                          getRelativeFilePath(filePath));
-    }
-
-    @Override
-    public void revertFileChanges(Path filePath) throws VCSException {
-        executeGitCommand("git",
-                          "checkout",
-                          "HEAD",
-                          getRelativeFilePath(filePath));
-    }
-
-    private String getRelativeFilePath(Path path) throws FileNotInWorkingTreeException {
         try {
-            return workingDirPath.relativize(path).toString();
-        } catch (IllegalArgumentException e) {
-            throw new FileNotInWorkingTreeException(path);
-        }
-    }
-
-    private List<String> executeGitCommand(String... command) throws CannotExecuteVCSOperation {
-        try {
-            Process cmdProcess = new ProcessBuilder()
-                    .directory(workingDirPath.toFile())
-                    .command(command)
-                    .start();
-
-            CompletableFuture<List<String>> result = getContents(cmdProcess.getInputStream());
-            CompletableFuture<List<String>> error = getContents(cmdProcess.getErrorStream());
-
-            int exitValue = cmdProcess.waitFor();
-
-            if (exitValue != 0)
-                throw new CannotExecuteVCSOperation(error.get().stream()
-                                                            .reduce(String::concat)
-                                                            .orElse("Unknown error"));
-
-            return result.get();
-        } catch (IOException | InterruptedException | ExecutionException e) {
+            commandExecutor.executeCommand(workDirPath,
+                                           "git",
+                                           "rm",
+                                           getRelativeFilePath(filePath));
+        } catch (CommandExecutionException e) {
             throw new CannotExecuteVCSOperation(e);
         }
     }
 
-    private CompletableFuture<List<String>> getContents(InputStream resultStream) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<String> result = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(resultStream))) {
-                String line;
-                while ((line = reader.readLine()) != null)
-                    result.add(line);
-                return result;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    @Override
+    public void revertFileChanges(Path filePath) throws VCSException {
+        try {
+            commandExecutor.executeCommand(workDirPath,
+                                           "git",
+                                           "checkout",
+                                           "HEAD",
+                                           getRelativeFilePath(filePath));
+        } catch (CommandExecutionException e) {
+            throw new CannotExecuteVCSOperation(e);
+        }
+    }
+
+    private String getRelativeFilePath(Path path) throws FileNotInWorkingTreeException {
+        try {
+            return workDirPath.relativize(path.toAbsolutePath()).toString();
+        } catch (IllegalArgumentException e) {
+            throw new FileNotInWorkingTreeException(workDirPath, path);
+        }
     }
 }

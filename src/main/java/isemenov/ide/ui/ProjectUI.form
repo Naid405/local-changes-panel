@@ -7,36 +7,22 @@
     <properties/>
     <border type="none"/>
     <children>
-      <splitpane id="84120">
-        <constraints border-constraint="Center"/>
-        <properties/>
+      <toolbar id="68e62">
+        <constraints border-constraint="North"/>
+        <properties>
+          <floatable value="false"/>
+        </properties>
         <border type="none"/>
         <children>
-          <scrollpane id="a0df7">
-            <constraints>
-              <splitpane position="left"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="43fce" class="javax.swing.JTree" binding="fileTree">
-                <constraints/>
-                <properties>
-                  <preferredSize width="150" height="0"/>
-                </properties>
-              </component>
-            </children>
-          </scrollpane>
-          <grid id="2e0d4" binding="fileEditorPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
+          <component id="e4cff" class="javax.swing.JButton" binding="refreshTreeButton">
+            <constraints/>
+            <properties>
+              <focusable value="false"/>
+              <text value="Refresh File Tree"/>
+            </properties>
+          </component>
         </children>
-      </splitpane>
+      </toolbar>
     </children>
   </grid>
 </form>

@@ -22,6 +22,7 @@
           <component id="bd6b7" class="javax.swing.JButton" binding="refreshButton">
             <constraints/>
             <properties>
+              <focusable value="false"/>
               <icon value="icons/refresh-button.png"/>
               <text value=""/>
               <toolTipText value="Refresh" noi18n="true"/>

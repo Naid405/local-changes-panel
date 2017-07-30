@@ -1,13 +1,13 @@
 package isemenov.ide.event.editor;
 
-import isemenov.ide.ProjectFile;
+import java.nio.file.Path;
 
 public interface ProjectFileEventsListener {
-    void projectFileOpened(ProjectFile file);
+    void projectFileOpened(Path file);
 
-    void projectFileClosed(ProjectFile file);
+    void projectFileClosed(Path file);
 
-    void projectFileChanged(ProjectFile file);
+    void projectFileChanged(Path file);
 
-    void projectFileSaved(ProjectFile file);
+    void projectFileSaved(Path file);
 }

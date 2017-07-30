@@ -1,20 +1,21 @@
 package isemenov.ide.event.editor;
 
 import isemenov.ide.DocumentEditor;
-import isemenov.ide.ProjectFile;
 import isemenov.ide.event.ide.IDEEvent;
 
+import java.nio.file.Path;
+
 public abstract class EditorFileEvent extends IDEEvent {
-    private final ProjectFile projectFile;
+    private final Path filePath;
     private final DocumentEditor documentEditor;
 
-    public EditorFileEvent(ProjectFile projectFile, DocumentEditor documentEditor) {
-        this.projectFile = projectFile;
+    public EditorFileEvent(Path filePath, DocumentEditor documentEditor) {
+        this.filePath = filePath;
         this.documentEditor = documentEditor;
     }
 
-    public ProjectFile getProjectFile() {
-        return projectFile;
+    public Path getFile() {
+        return filePath;
     }
 
     public DocumentEditor getDocumentEditor() {

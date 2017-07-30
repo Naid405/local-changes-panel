@@ -1,10 +1,11 @@
 package isemenov.ide.event.editor;
 
 import isemenov.ide.DocumentEditor;
-import isemenov.ide.ProjectFile;
+
+import java.nio.file.Path;
 
 public class EditorFileChangedEvent extends EditorFileEvent {
-    public EditorFileChangedEvent(ProjectFile projectFile, DocumentEditor documentEditor) {
-        super(projectFile, documentEditor);
+    public EditorFileChangedEvent(Path filePath, DocumentEditor documentEditor) {
+        super(filePath, documentEditor);
     }
 }

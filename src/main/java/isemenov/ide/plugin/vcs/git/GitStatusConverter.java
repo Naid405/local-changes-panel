@@ -2,21 +2,14 @@ package isemenov.ide.plugin.vcs.git;
 
 import isemenov.ide.plugin.vcs.VCSFileStatus;
 
+/**
+ * Utility class providing mapping from Git status to abstract VCS status used by application
+ */
 public final class GitStatusConverter {
     private GitStatusConverter() {
     }
 
     //region Git help
-    /*
-    ' ' = unmodified
-    M = modified
-    A = added
-    D = deleted
-    R = renamed
-    C = copied
-    U = updated but unmerged
-    */
-
     /*
     X          Y     Meaning
     -------------------------------------------------
@@ -45,16 +38,29 @@ public final class GitStatusConverter {
     //endregion
 
     public static VCSFileStatus convert(Character indexStatus, Character workTreeStatus) {
-        switch (workTreeStatus) {
-            case 'M':
-                return VCSFileStatus.MODIFIED;
-            case 'D':
-                return VCSFileStatus.DELETED;
-            case '?':
+        String combinedStatus = indexStatus.toString() + workTreeStatus.toString();
+        switch (combinedStatus) {
+            case "  ":
+                return VCSFileStatus.UNCHANGED;
+            case "DD":
+                return VCSFileStatus.CONFLICTING;
+            case "AU":
+                return VCSFileStatus.CONFLICTING;
+            case "UD":
+                return VCSFileStatus.CONFLICTING;
+            case "UA":
+                return VCSFileStatus.CONFLICTING;
+            case "DU":
+                return VCSFileStatus.CONFLICTING;
+            case "AA":
+                return VCSFileStatus.CONFLICTING;
+            case "UU":
+                return VCSFileStatus.CONFLICTING;
+            case "??":
                 return VCSFileStatus.UNTRACKED;
-            case '!':
+            case "!!":
                 return VCSFileStatus.IGNORED;
-            case ' ':
+            default:
                 switch (indexStatus) {
                     case 'M':
                         return VCSFileStatus.MODIFIED;
@@ -67,10 +73,17 @@ public final class GitStatusConverter {
                     case 'C':
                         return VCSFileStatus.NEW;
                     default:
-                        return VCSFileStatus.UNKNOWN;
+                        switch (workTreeStatus) {
+                            case 'M':
+                                return VCSFileStatus.MODIFIED;
+                            case 'D':
+                                return VCSFileStatus.DELETED;
+                            case ' ':
+
+                            default:
+                                return VCSFileStatus.UNKNOWN;
+                        }
                 }
-            default:
-                return VCSFileStatus.UNKNOWN;
         }
     }
 }

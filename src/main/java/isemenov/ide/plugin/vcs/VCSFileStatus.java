@@ -5,6 +5,7 @@ public enum VCSFileStatus {
     NEW,
     MODIFIED,
     DELETED,
+    CONFLICTING,
     UNTRACKED,
     IGNORED,
     UNKNOWN
