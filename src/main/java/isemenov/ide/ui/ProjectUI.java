@@ -2,13 +2,9 @@ package isemenov.ide.ui;
 
 import isemenov.ide.Project;
 import isemenov.ide.ui.component.ApplicationUIMenu;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ProjectUI {
     private JPanel mainPanel;

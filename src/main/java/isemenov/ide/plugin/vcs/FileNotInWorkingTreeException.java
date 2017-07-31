@@ -1,6 +1,4 @@
-package isemenov.ide.plugin.vcs.git;
-
-import isemenov.ide.plugin.vcs.VCSException;
+package isemenov.ide.plugin.vcs;
 
 import java.nio.file.Path;
 

@@ -11,38 +11,6 @@ public class GitStatusLine {
     private String filePath;
     private String filePathFrom;
 
-    public Character getIndexStatus() {
-        return indexStatus;
-    }
-
-    public Character getWorkTreeStatus() {
-        return workTreeStatus;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public String getFilePathFrom() {
-        return filePathFrom;
-    }
-
-    private void setIndexStatus(Character indexStatus) {
-        this.indexStatus = indexStatus;
-    }
-
-    private void setWorkTreeStatus(Character workTreeStatus) {
-        this.workTreeStatus = workTreeStatus;
-    }
-
-    private void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    private void setFilePathFrom(String pathFrom) {
-        this.filePathFrom = pathFrom;
-    }
-
     public static GitStatusLine parse(String statusLine) throws MalformedGitStatusLineException {
         GitStatusLine parsedStatusLine = new GitStatusLine();
         parsedStatusLine.setIndexStatus(statusLine.charAt(0));
@@ -59,5 +27,37 @@ public class GitStatusLine {
             parsedStatusLine.setFilePath(statusLine.substring(3));
         }
         return parsedStatusLine;
+    }
+
+    public Character getIndexStatus() {
+        return indexStatus;
+    }
+
+    private void setIndexStatus(Character indexStatus) {
+        this.indexStatus = indexStatus;
+    }
+
+    public Character getWorkTreeStatus() {
+        return workTreeStatus;
+    }
+
+    private void setWorkTreeStatus(Character workTreeStatus) {
+        this.workTreeStatus = workTreeStatus;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    private void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public String getFilePathFrom() {
+        return filePathFrom;
+    }
+
+    private void setFilePathFrom(String pathFrom) {
+        this.filePathFrom = pathFrom;
     }
 }
