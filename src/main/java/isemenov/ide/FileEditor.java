@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public final class FileEditor {
+public class FileEditor {
     private final Map<Path, DocumentEditor> openedFiles;
     private final DefaultTreeModel fileTreeModel;
 
@@ -45,6 +45,9 @@ public final class FileEditor {
 
     public void openFile(Path file) {
         Objects.requireNonNull(file);
+        // Only need to check it here, since all other methods operate only with opened files
+        if(file.toFile().isDirectory())
+            throw new IllegalArgumentException("Cannot open directory in editor");
 
         if (openedFiles.containsKey(file))
             return;
@@ -90,7 +93,7 @@ public final class FileEditor {
         eventManager.fireEventListeners(this, new EditorFileSavedEvent(file, editor));
     }
 
-    public void closeFile(Path file) {
+    public void closeOpenedFile(Path file) {
         Objects.requireNonNull(file);
 
         DocumentEditor closed = openedFiles.remove(file);

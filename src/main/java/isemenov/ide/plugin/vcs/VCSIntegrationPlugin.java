@@ -80,7 +80,7 @@ public class VCSIntegrationPlugin implements IDEPlugin {
             if (vcsService == null)
                 return;
 
-            project.getFileEditor().closeFile(file);
+            project.getFileEditor().closeOpenedFile(file);
             vcsService.removeFile(file);
             project.refreshProjectFiles();
         } finally {

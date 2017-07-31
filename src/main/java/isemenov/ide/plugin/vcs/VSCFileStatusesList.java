@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/*Most of the methods are synchronized bc we are operating with indexes of arraylist instead of iterators
-* */
+/**
+ * Container for files VCS statuses
+ * Most of the methods are synchronized bc we are operating with indexes of arraylist instead of iterators
+ */
 public class VSCFileStatusesList extends AbstractListModel<FileVCSStatus> {
     private final List<FileVCSStatus> projectFileStatuses;
 

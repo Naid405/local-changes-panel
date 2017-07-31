@@ -1,7 +1,7 @@
 package isemenov.ide;
 
+import isemenov.ide.event.ConcurrentEventManager;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.UnorderedEventManager;
 import isemenov.ide.event.ide.ProjectChangedEvent;
 import isemenov.ide.plugin.IDEPlugin;
 
@@ -13,14 +13,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class IDE {
+public class IDE {
     private final EventManager eventManager;
     private final List<IDEPlugin> plugins;
 
     private volatile Project project;
 
     public IDE(List<IDEPlugin> plugins) {
-        this.eventManager = new UnorderedEventManager();
+        this.eventManager = new ConcurrentEventManager();
         this.plugins = plugins != null ? plugins : new ArrayList<>();
         for (IDEPlugin plugin : this.plugins) {
             this.addProjectChangedListener(e -> plugin.setProject(e.getProject()));

@@ -3,6 +3,9 @@ package isemenov.ide.plugin.vcs.git;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Support class for parsing Git status lines
+ */
 public class GitStatusLine {
     private final static Pattern TWO_FILE_PATTERN = Pattern.compile("(?<firstFilePath>.*) -> (?<secondFilePath>.*)");
 

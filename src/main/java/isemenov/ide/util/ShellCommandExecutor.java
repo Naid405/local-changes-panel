@@ -24,13 +24,7 @@ public class ShellCommandExecutor {
             int exitValue = cmdProcess.waitFor();
 
             if (exitValue != 0) {
-                StringBuilder stringBuilder = new StringBuilder();
-                for (String s : command) {
-                    stringBuilder.append(s);
-                    stringBuilder.append(" ");
-                }
-
-                throw new CommandExecutionException(stringBuilder.toString(),
+                throw new CommandExecutionException(concatStringArrayToWhitespacedString(command),
                                                     error.get().stream()
                                                             .reduce(String::concat)
                                                             .orElse("Unknown error"));
@@ -38,13 +32,17 @@ public class ShellCommandExecutor {
 
             return result.get();
         } catch (IOException | InterruptedException | ExecutionException e) {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (String s : command) {
-                stringBuilder.append(s);
-                stringBuilder.append(" ");
-            }
-            throw new CommandExecutionException(stringBuilder.toString(), e);
+            throw new CommandExecutionException(concatStringArrayToWhitespacedString(command), e);
         }
+    }
+
+    private String concatStringArrayToWhitespacedString(String[] command) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String s : command) {
+            stringBuilder.append(s);
+            stringBuilder.append(" ");
+        }
+        return stringBuilder.toString();
     }
 
     private CompletableFuture<List<String>> getContents(InputStream resultStream) {

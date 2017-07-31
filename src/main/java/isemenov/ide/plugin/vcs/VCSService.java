@@ -3,6 +3,9 @@ package isemenov.ide.plugin.vcs;
 import java.nio.file.Path;
 import java.util.Map;
 
+/**
+ * Provider for common VCS functionality
+ */
 public interface VCSService {
     Map<Path, VCSFileStatus> getStatus() throws VCSException;
 

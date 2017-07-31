@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class DocumentEditor {
+public class DocumentEditor {
     private final EditorKit editorKit;
     private final Document document;
     private final AsyncChangeNotifyingDocumentListener documentChangeListener;

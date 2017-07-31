@@ -106,7 +106,7 @@ public class TabbedFileEditorUI {
                                 (e) -> new SwingWorker<Void, Void>() {
                                     @Override
                                     protected Void doInBackground() throws Exception {
-                                        fileEditor.closeFile(fileOpenedEvent.getFile());
+                                        fileEditor.closeOpenedFile(fileOpenedEvent.getFile());
                                         return null;
                                     }
                                 }.execute()

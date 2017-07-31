@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * In the real world this would call the plugin subsystem
+ */
 public class StaticRegistryDelegatingPluginUIFactory implements PluginUIFactory {
     private final static Map<Class<? extends IDEPlugin>, PluginUIFactory> DELEGATE_MAP = new HashMap<>();
 

@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
+/**
+ * To use for notification that should be done synchronously,
+ */
 public class UnorderedEventManager implements EventManager {
     private static final Logger logger = LogManager.getLogger(UnorderedEventManager.class);
 

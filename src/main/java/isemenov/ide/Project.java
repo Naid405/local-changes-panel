@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public final class Project {
+public class Project {
     private final Path projectDirectoryPath;
 
     private final FileEditor fileEditor;
@@ -80,7 +80,7 @@ public final class Project {
                 this.projectFiles = projectFiles;
             }
             for (Path deletedFile : deletedFiles) {
-                fileEditor.closeFile(deletedFile);
+                fileEditor.closeOpenedFile(deletedFile);
             }
         } catch (IOException e) {
             throw new FileTreeReadingException(projectDirectoryPath, e);
