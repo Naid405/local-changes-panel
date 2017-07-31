@@ -40,11 +40,12 @@ public class TabbedFileEditorUI {
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
+                    Path filePath = (Path) fileTreeNode.getUserObject();
+                    fileEditor.openFile(filePath);
                     try {
-                        Path filePath = (Path) fileTreeNode.getUserObject();
-                        fileEditor.openFile(filePath);
                         fileEditor.readOpenedFileContent(filePath);
                     } catch (FileReadingException e) {
+                        fileEditor.closeOpenedFile(filePath);
                         logger.error(e.getMessage(), e);
                     }
                     return null;
