@@ -6,7 +6,6 @@ import isemenov.ide.event.ide.ProjectChangedEvent;
 import isemenov.ide.plugin.IDEPlugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +34,7 @@ public final class IDE {
         return this.project != null && this.project.getProjectDirectoryPath().compareTo(rootPath) == 0;
     }
 
-    public void openProject(File projectDirectoryPath) throws IOException {
+    public void openProject(File projectDirectoryPath) {
         Objects.requireNonNull(projectDirectoryPath);
 
         Path rootPath = projectDirectoryPath.toPath().normalize();

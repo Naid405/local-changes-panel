@@ -75,7 +75,7 @@ public final class FileEditor {
         }
     }
 
-    public void saveFile(Path file) {
+    public void saveOpenedFileContent(Path file) {
         Objects.requireNonNull(file);
 
         DocumentEditor editor = openedFiles.get(file);

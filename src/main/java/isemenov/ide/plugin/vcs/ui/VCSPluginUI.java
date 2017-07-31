@@ -1,7 +1,7 @@
 package isemenov.ide.plugin.vcs.ui;
 
 import isemenov.ide.plugin.PluginUI;
-import isemenov.ide.plugin.vcs.ProjectFileVCSStatus;
+import isemenov.ide.plugin.vcs.FileVCSStatus;
 import isemenov.ide.plugin.vcs.VCSIntegrationPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.util.Optional;
 
 public class VCSPluginUI implements PluginUI {
     private static final Logger logger = LogManager.getLogger(VCSPluginUI.class);
@@ -19,7 +20,7 @@ public class VCSPluginUI implements PluginUI {
     private final VCSIntegrationPlugin integrationPlugin;
 
     private JPanel mainPanel;
-    private JList<ProjectFileVCSStatus> fileList;
+    private JList<FileVCSStatus> fileList;
     private JButton refreshButton;
 
     public VCSPluginUI(VCSIntegrationPlugin integrationPlugin) {
@@ -80,7 +81,7 @@ public class VCSPluginUI implements PluginUI {
     }
 
     private void deleteSelectedFile() {
-        ProjectFileVCSStatus file = fileList.getSelectedValue();
+        FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -97,7 +98,7 @@ public class VCSPluginUI implements PluginUI {
     }
 
     private void revertSelectedFile() {
-        ProjectFileVCSStatus file = fileList.getSelectedValue();
+        FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -114,7 +115,7 @@ public class VCSPluginUI implements PluginUI {
     }
 
     private void refreshSelectedFile() {
-        ProjectFileVCSStatus file = fileList.getSelectedValue();
+        FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -130,8 +131,8 @@ public class VCSPluginUI implements PluginUI {
     }
 
     @Override
-    public WindowFocusListener getWindowFocusListener() {
-        return new WindowFocusListener() {
+    public Optional<WindowFocusListener> getWindowFocusListener() {
+        return Optional.of(new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
                 refreshAllFiles();
@@ -141,7 +142,7 @@ public class VCSPluginUI implements PluginUI {
             public void windowLostFocus(WindowEvent e) {
 
             }
-        };
+        });
     }
 
     {

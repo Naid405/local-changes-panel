@@ -2,12 +2,12 @@ package isemenov.ide.plugin.vcs;
 
 import java.nio.file.Path;
 
-public class ProjectFileVCSStatus {
+public class FileVCSStatus {
     private Path file;
     private VCSFileStatus vcsFileStatus;
     private boolean unsaved;
 
-    public ProjectFileVCSStatus(Path file, VCSFileStatus vcsFileStatus, boolean unsaved) {
+    public FileVCSStatus(Path file, VCSFileStatus vcsFileStatus, boolean unsaved) {
         this.file = file;
         this.vcsFileStatus = vcsFileStatus;
         this.unsaved = unsaved;

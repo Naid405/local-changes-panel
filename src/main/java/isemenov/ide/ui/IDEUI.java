@@ -38,10 +38,9 @@ public class IDEUI {
             pluginUIFactory.constructUIForPlugin(plugin)
                     .ifPresent(pluginUI -> {
                         pluginPane.addTab(plugin.getShortName(), pluginUI.$$$getRootComponent$$$());
-                        windowFocusListeners.add(pluginUI.getWindowFocusListener());
+                        pluginUI.getWindowFocusListener().ifPresent(windowFocusListeners::add);
                     });
         }
-
 
         ide.addProjectChangedListener((event -> SwingUtilities.invokeLater(() -> {
             ProjectUI projectUI = new ProjectUI(applicationMenu, event.getProject());

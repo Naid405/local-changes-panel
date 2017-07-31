@@ -8,8 +8,8 @@ import java.util.Map;
 
 /*Most of the methods are synchronized bc we are operating with indexes of arraylist instead of iterators
 * */
-public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus> {
-    private final List<ProjectFileVCSStatus> projectFileStatuses;
+public class VSCFileStatusesList extends AbstractListModel<FileVCSStatus> {
+    private final List<FileVCSStatus> projectFileStatuses;
 
     public VSCFileStatusesList() {
         this.projectFileStatuses = new ArrayList<>();
@@ -21,7 +21,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
     }
 
     @Override
-    public ProjectFileVCSStatus getElementAt(int index) {
+    public FileVCSStatus getElementAt(int index) {
         return projectFileStatuses.get(index);
     }
 
@@ -29,7 +29,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {
-            ProjectFileVCSStatus fileStatus = this.getElementAt(i);
+            FileVCSStatus fileStatus = this.getElementAt(i);
             if (fileStatus.getFile().equals(file)) {
                 fileStatus.setUnsaved(unsaved);
                 this.fireContentsChanged(this, i, i);
@@ -41,7 +41,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {
-            ProjectFileVCSStatus fileStatus = this.getElementAt(i);
+            FileVCSStatus fileStatus = this.getElementAt(i);
             if (fileStatus.getFile().equals(file)) {
                 fileStatus.setVcsFileStatus(status);
                 this.fireContentsChanged(this, i, i);
@@ -53,7 +53,7 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {
-            ProjectFileVCSStatus fileStatus = this.getElementAt(i);
+            FileVCSStatus fileStatus = this.getElementAt(i);
             Path path = fileStatus.getFile();
             VCSFileStatus newStatus = statusMap.get(path);
             //To get status for files under ignored directories
@@ -71,11 +71,11 @@ public class VSCFileStatusesList extends AbstractListModel<ProjectFileVCSStatus>
 
     @SuppressWarnings("SameParameterValue")
     synchronized void addProjectFileStatus(Path file, VCSFileStatus status, boolean unsaved) {
-        for (ProjectFileVCSStatus fileStatus : projectFileStatuses) {
+        for (FileVCSStatus fileStatus : projectFileStatuses) {
             if (fileStatus.getFile().equals(file))
                 return;
         }
-        projectFileStatuses.add(new ProjectFileVCSStatus(file, status, unsaved));
+        projectFileStatuses.add(new FileVCSStatus(file, status, unsaved));
         this.fireContentsChanged(this, this.getSize() - 1, this.getSize() - 1);
     }
 

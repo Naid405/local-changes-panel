@@ -130,7 +130,7 @@ public class TabbedFileEditorUI {
             @Override
             protected Void doInBackground() throws Exception {
                 try {
-                    fileEditor.saveFile(file);
+                    fileEditor.saveOpenedFileContent(file);
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
                 }
