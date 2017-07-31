@@ -4,8 +4,6 @@ import isemenov.ide.IDE;
 import isemenov.ide.plugin.IDEPlugin;
 import isemenov.ide.plugin.PluginUIFactory;
 import isemenov.ide.ui.component.ApplicationUIMenu;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,11 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IDEUI {
-    private static final Logger logger = LogManager.getLogger(IDEUI.class);
-
     private final IDE ide;
     private final List<WindowFocusListener> windowFocusListeners;
     private volatile SwingWorker lastInvokedOpenProjectWorker;
+
     private JPanel mainPanel;
     private JPanel projectPanel;
     private JTabbedPane pluginPane;
@@ -45,6 +42,13 @@ public class IDEUI {
         ide.addProjectChangedListener((event -> SwingUtilities.invokeLater(() -> {
             ProjectUI projectUI = new ProjectUI(applicationMenu, event.getProject());
             setProjectView(projectUI.$$$getRootComponent$$$());
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    event.getProject().refreshProjectFiles();
+                    return null;
+                }
+            }.execute();
         })));
     }
 
@@ -65,14 +69,10 @@ public class IDEUI {
 
             SwingWorker worker = new SwingWorker<Void, Void>() {
                 @Override
-                protected Void doInBackground() throws Exception {
-                    try {
-                        if (!ide.isCurrentlyOpenProject(file))
-                            this.process(null);
-                        ide.openProject(file);
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
+                protected Void doInBackground() {
+                    if (!ide.isCurrentlyOpenProject(file))
+                        this.process(null);
+                    ide.openProject(file);
                     return null;
                 }
 

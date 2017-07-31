@@ -2,10 +2,10 @@ package isemenov.ide;
 
 import isemenov.ide.event.ConcurrentEventManager;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.editor.EditorFileChangedEvent;
-import isemenov.ide.event.editor.EditorFileClosedEvent;
-import isemenov.ide.event.editor.EditorFileOpenedEvent;
-import isemenov.ide.event.editor.EditorFileSavedEvent;
+import isemenov.ide.event.ide.editor.EditorFileChangedEvent;
+import isemenov.ide.event.ide.editor.EditorFileClosedEvent;
+import isemenov.ide.event.ide.editor.EditorFileOpenedEvent;
+import isemenov.ide.event.ide.editor.EditorFileSavedEvent;
 
 import javax.swing.text.StyledEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -15,16 +15,19 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class FileEditor {
+    private final ErrorHandler errorHandler;
+    private final EventManager eventManager;
+
     private final Map<Path, DocumentEditor> openedFiles;
     private final DefaultTreeModel fileTreeModel;
 
-    private final EventManager eventManager;
-
-    public FileEditor() {
+    public FileEditor(ErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
         this.openedFiles = new ConcurrentHashMap<>();
         this.fileTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode(), true);
         this.eventManager = new ConcurrentEventManager();
@@ -43,14 +46,20 @@ public class FileEditor {
         return !openedFiles.isEmpty();
     }
 
-    public void openFile(Path file) {
+    /**
+     * Open file in editor
+     *
+     * @param file file to be opened
+     * @return true in file was opened, false if file was already open
+     */
+    public boolean openFile(Path file) {
         Objects.requireNonNull(file);
         // Only need to check it here, since all other methods operate only with opened files
-        if(file.toFile().isDirectory())
+        if (file.toFile().isDirectory())
             throw new IllegalArgumentException("Cannot open directory in editor");
 
         if (openedFiles.containsKey(file))
-            return;
+            return false;
 
         DocumentEditor documentEditor = new DocumentEditor(new StyledEditorKit(), file.toAbsolutePath());
 
@@ -61,7 +70,14 @@ public class FileEditor {
                             file,
                             documentEditor
                     )));
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    public Optional<DocumentEditor> getEditorForFile(Path filePath) {
+        return Optional.ofNullable(openedFiles.get(filePath));
     }
 
     public void readOpenedFileContent(Path file) {
@@ -74,7 +90,8 @@ public class FileEditor {
         try {
             editor.readDocument();
         } catch (IOException e) {
-            throw new FileReadingException(file, e);
+            errorHandler.error(new FileReadingException(file, e));
+            closeOpenedFile(file);
         }
     }
 
@@ -87,10 +104,10 @@ public class FileEditor {
 
         try {
             editor.writeDocument();
+            eventManager.fireEventListeners(this, new EditorFileSavedEvent(file, editor));
         } catch (IOException e) {
-            throw new FileSavingException(file, e);
+            errorHandler.error(new FileSavingException(file, e));
         }
-        eventManager.fireEventListeners(this, new EditorFileSavedEvent(file, editor));
     }
 
     public void closeOpenedFile(Path file) {

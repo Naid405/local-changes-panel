@@ -14,12 +14,15 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class IDE {
+    private final ErrorHandler errorHandler;
     private final EventManager eventManager;
+
     private final List<IDEPlugin> plugins;
 
     private volatile Project project;
 
-    public IDE(List<IDEPlugin> plugins) {
+    public IDE(ErrorHandler errorHandler, List<IDEPlugin> plugins) {
+        this.errorHandler = errorHandler;
         this.eventManager = new ConcurrentEventManager();
         this.plugins = plugins != null ? plugins : new ArrayList<>();
         for (IDEPlugin plugin : this.plugins) {
@@ -36,23 +39,25 @@ public class IDE {
 
     public void openProject(File projectDirectoryPath) {
         Objects.requireNonNull(projectDirectoryPath);
+        try {
+            Path rootPath = projectDirectoryPath.toPath().normalize();
 
-        Path rootPath = projectDirectoryPath.toPath().normalize();
+            if (!projectDirectoryPath.isDirectory())
+                throw new NotADirectoryException(rootPath);
 
-        if (!projectDirectoryPath.isDirectory())
-            throw new NotADirectoryException(rootPath);
+            FileEditor editor = new FileEditor(errorHandler);
 
-        FileEditor editor = new FileEditor();
+            this.project = new Project(errorHandler, rootPath, editor);
 
-        this.project = new Project(rootPath, editor);
-        this.project.refreshProjectFiles();
+            for (IDEPlugin plugin : plugins) {
+                this.project.addProjectFileEventListener(plugin.getEditorEventsListener());
+            }
 
-        for (IDEPlugin plugin : plugins) {
-            this.project.addProjectFileEventListener(plugin.getEditorEventsListener());
+            if (!Thread.currentThread().isInterrupted())
+                this.eventManager.fireEventListeners(this, new ProjectChangedEvent(project));
+        } catch (NotADirectoryException e) {
+            errorHandler.error(e);
         }
-
-        if (!Thread.currentThread().isInterrupted())
-            this.eventManager.fireEventListeners(this, new ProjectChangedEvent(project));
     }
 
     public List<IDEPlugin> getPlugins() {

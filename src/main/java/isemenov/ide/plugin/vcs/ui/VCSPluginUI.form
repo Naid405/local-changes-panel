@@ -28,6 +28,20 @@
               <toolTipText value="Refresh" noi18n="true"/>
             </properties>
           </component>
+          <component id="13758" class="javax.swing.JButton" binding="commitButton" default-binding="true">
+            <constraints/>
+            <properties>
+              <icon value="icons/upload-button.png"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="dad4d" class="javax.swing.JButton" binding="updateButton" default-binding="true">
+            <constraints/>
+            <properties>
+              <icon value="icons/download-button.png"/>
+              <text value=""/>
+            </properties>
+          </component>
         </children>
       </toolbar>
       <scrollpane id="53447">

@@ -81,6 +81,7 @@ public class GitService implements VCSService {
             commandExecutor.executeCommand(workDirPath,
                                            "git",
                                            "rm",
+                                           "--force",
                                            getRelativeFilePath(filePath));
         } catch (CommandExecutionException e) {
             throw new CannotExecuteVCSOperation(e);

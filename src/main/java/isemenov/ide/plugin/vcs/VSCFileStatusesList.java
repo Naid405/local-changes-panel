@@ -51,7 +51,7 @@ public class VSCFileStatusesList extends AbstractListModel<FileVCSStatus> {
         }
     }
 
-    synchronized void updateVCSStatusesForPaths(Map<Path, VCSFileStatus> statusMap) {
+    synchronized void updateVCSStatusesForFiles(Map<Path, VCSFileStatus> statusMap) {
         if (this.getSize() == 0)
             return;
         for (int i = 0; i < this.getSize(); i++) {

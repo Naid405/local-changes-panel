@@ -1,7 +1,7 @@
-package isemenov.ide.event.document;
+package isemenov.ide.event.ide.document;
 
 import isemenov.ide.DocumentEditor;
-import isemenov.ide.event.editor.EditorFileEvent;
+import isemenov.ide.event.ide.editor.EditorFileEvent;
 
 import javax.swing.text.Document;
 import java.nio.file.Path;

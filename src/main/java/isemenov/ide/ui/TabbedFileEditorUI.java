@@ -2,14 +2,11 @@ package isemenov.ide.ui;
 
 import isemenov.ide.DocumentEditor;
 import isemenov.ide.FileEditor;
-import isemenov.ide.FileReadingException;
-import isemenov.ide.event.editor.EditorFileClosedEvent;
-import isemenov.ide.event.editor.EditorFileOpenedEvent;
+import isemenov.ide.event.ide.editor.EditorFileClosedEvent;
+import isemenov.ide.event.ide.editor.EditorFileOpenedEvent;
 import isemenov.ide.ui.action.JTreeNodeDoubleClickMouseAdapter;
 import isemenov.ide.ui.component.ApplicationUIMenu;
 import isemenov.ide.ui.component.CloseableChangeDisplayingTab;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -21,8 +18,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public class TabbedFileEditorUI {
-    private static final Logger logger = LogManager.getLogger(TabbedFileEditorUI.class);
-
     private final FileEditor fileEditor;
 
     private JPanel mainPanel;
@@ -39,14 +34,15 @@ public class TabbedFileEditorUI {
             if (fileTreeNode == null || fileTreeNode.getAllowsChildren()) return;
             new SwingWorker<Void, Void>() {
                 @Override
-                protected Void doInBackground() throws Exception {
+                protected Void doInBackground() {
                     Path filePath = (Path) fileTreeNode.getUserObject();
-                    fileEditor.openFile(filePath);
-                    try {
+                    if (fileEditor.openFile(filePath)) {
                         fileEditor.readOpenedFileContent(filePath);
-                    } catch (FileReadingException e) {
-                        fileEditor.closeOpenedFile(filePath);
-                        logger.error(e.getMessage(), e);
+                    } else {
+                        fileEditor.getEditorForFile(filePath).ifPresent(
+                                editor -> SwingUtilities.invokeLater(() -> tabbedPane.setSelectedIndex(
+                                        indexOfTabWithDocument(
+                                                editor.getDocument()))));
                     }
                     return null;
                 }
@@ -129,12 +125,8 @@ public class TabbedFileEditorUI {
         Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    fileEditor.saveOpenedFileContent(file);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                }
+            protected Void doInBackground() {
+                fileEditor.saveOpenedFileContent(file);
                 return null;
             }
         }.execute();

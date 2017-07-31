@@ -2,9 +2,9 @@ package isemenov.ide;
 
 import isemenov.ide.event.ConcurrentEventManager;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.document.DocumentBeingSavedEvent;
-import isemenov.ide.event.document.DocumentChangedEvent;
-import isemenov.ide.event.document.DocumentSavedEvent;
+import isemenov.ide.event.ide.document.DocumentBeingSavedEvent;
+import isemenov.ide.event.ide.document.DocumentChangedEvent;
+import isemenov.ide.event.ide.document.DocumentSavedEvent;
 import isemenov.ide.ui.action.AsyncChangeNotifyingDocumentListener;
 
 import javax.swing.text.BadLocationException;
@@ -19,11 +19,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class DocumentEditor {
+    private final EventManager eventManager;
+
     private final EditorKit editorKit;
     private final Document document;
     private final AsyncChangeNotifyingDocumentListener documentChangeListener;
-
-    private final EventManager eventManager;
 
     private volatile boolean documentChanged;
 
@@ -57,7 +57,7 @@ public class DocumentEditor {
         return this.document;
     }
 
-    public void readDocument() throws IOException {
+    protected void readDocument() throws IOException {
         synchronized (document) {
             Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
             try (Reader reader = Files.newBufferedReader(file)) {
@@ -79,7 +79,7 @@ public class DocumentEditor {
         }
     }
 
-    public void writeDocument() throws IOException {
+    protected void writeDocument() throws IOException {
         synchronized (document) {
             Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
             this.eventManager.fireEventListeners(this,

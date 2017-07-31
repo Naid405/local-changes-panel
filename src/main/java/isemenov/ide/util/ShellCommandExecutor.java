@@ -27,7 +27,7 @@ public class ShellCommandExecutor {
                 throw new CommandExecutionException(concatStringArrayToWhitespacedString(command),
                                                     error.get().stream()
                                                             .reduce(String::concat)
-                                                            .orElse("Unknown error"));
+                                                            .orElse("Unknown showError"));
             }
 
             return result.get();

@@ -1,4 +1,4 @@
-package isemenov.ide.event.document;
+package isemenov.ide.event.ide.document;
 
 import isemenov.ide.DocumentEditor;
 

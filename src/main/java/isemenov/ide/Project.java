@@ -1,6 +1,6 @@
 package isemenov.ide;
 
-import isemenov.ide.event.editor.ProjectFileEventsListener;
+import isemenov.ide.event.ide.editor.ProjectFileEventsListener;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.IOException;
@@ -13,22 +13,27 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Project {
+    private final ErrorHandler errorHandler;
+
     private final Path projectDirectoryPath;
 
     private final FileEditor fileEditor;
 
     private volatile Set<Path> projectFiles;
 
-    public Project(Path projectDirectoryPath,
+    public Project(ErrorHandler errorHandler,
+                   Path projectDirectoryPath,
                    FileEditor fileEditor) {
+        this.errorHandler = errorHandler;
         Objects.requireNonNull(projectDirectoryPath);
         Objects.requireNonNull(fileEditor);
 
         this.projectDirectoryPath = projectDirectoryPath;
         this.fileEditor = fileEditor;
-        this.projectFiles = new HashSet<>();
+        this.projectFiles = ConcurrentHashMap.newKeySet();
     }
 
     public Path getProjectDirectoryPath() {
@@ -61,6 +66,7 @@ public class Project {
 
                             directoryNodeMapping.put(dir, node);
                         }
+                        projectFiles.add(dir);
                         return Thread.currentThread().isInterrupted() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
                     }
 
@@ -72,21 +78,20 @@ public class Project {
                         DefaultMutableTreeNode node = new FileTreeNode(file, false);
                         parent.add(node);
 
+                        projectFiles.add(file);
                         return Thread.currentThread().isInterrupted() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
                     }
                 });
                 deletedFiles = this.projectFiles;
-
                 this.projectFiles = projectFiles;
             }
             for (Path deletedFile : deletedFiles) {
                 fileEditor.closeOpenedFile(deletedFile);
             }
-        } catch (IOException e) {
-            throw new FileTreeReadingException(projectDirectoryPath, e);
-        }
-        if (!Thread.currentThread().isInterrupted())
             fileEditor.setFileTree(root);
+        } catch (IOException e) {
+            errorHandler.error(new FileTreeReadingException(projectDirectoryPath, e));
+        }
     }
 
     public void addProjectFileEventListener(ProjectFileEventsListener listener) {

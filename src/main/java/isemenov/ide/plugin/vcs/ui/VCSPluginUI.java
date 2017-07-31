@@ -3,8 +3,6 @@ package isemenov.ide.plugin.vcs.ui;
 import isemenov.ide.plugin.PluginUI;
 import isemenov.ide.plugin.vcs.FileVCSStatus;
 import isemenov.ide.plugin.vcs.VCSIntegrationPlugin;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,20 +13,22 @@ import java.awt.event.WindowFocusListener;
 import java.util.Optional;
 
 public class VCSPluginUI implements PluginUI {
-    private static final Logger logger = LogManager.getLogger(VCSPluginUI.class);
-
     private final VCSIntegrationPlugin integrationPlugin;
 
     private JPanel mainPanel;
     private JList<FileVCSStatus> fileList;
     private JButton refreshButton;
+    private JButton commitButton;
+    private JButton updateButton;
 
     public VCSPluginUI(VCSIntegrationPlugin integrationPlugin) {
         this.integrationPlugin = integrationPlugin;
 
-        refreshButton.addActionListener(e -> refreshAllFiles());
+        refreshButton.addActionListener(e -> refreshTrackedFiles());
+        commitButton.addActionListener(e -> commitTrackedFiles());
+        updateButton.addActionListener(e -> updateAllFiles());
 
-        fileList.setModel(integrationPlugin.getFileStatusesList());
+        fileList.setModel(integrationPlugin.getTrackedFileStatusesList());
         //So that it is selected via right click too
         fileList.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -66,15 +66,31 @@ public class VCSPluginUI implements PluginUI {
         });
     }
 
-    private void refreshAllFiles() {
+    private void refreshTrackedFiles() {
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    integrationPlugin.refreshAllFileStatuses();
-                } catch (Exception e) {
-                    logger.warn("Error occured while refreshing VCS status for tracked files", e);
-                }
+            protected Void doInBackground() {
+                integrationPlugin.refreshTrackedFileStatuses();
+                return null;
+            }
+        }.execute();
+    }
+
+    private void commitTrackedFiles() {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                integrationPlugin.commitTrackedFiles();
+                return null;
+            }
+        }.execute();
+    }
+
+    private void updateAllFiles() {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                integrationPlugin.updateProject();
                 return null;
             }
         }.execute();
@@ -84,14 +100,9 @@ public class VCSPluginUI implements PluginUI {
         FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    integrationPlugin.removeFile(file.getFile());
-                    integrationPlugin.refreshFileStatus(file.getFile());
-                } catch (Exception e) {
-                    logger.warn("Error occured while removing file " + file.getFile(),
-                                e);
-                }
+            protected Void doInBackground() {
+                integrationPlugin.removeFile(file.getFile());
+                integrationPlugin.refreshFileStatus(file.getFile());
                 return null;
             }
         }.execute();
@@ -101,14 +112,9 @@ public class VCSPluginUI implements PluginUI {
         FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    integrationPlugin.revertFileChanges(file.getFile());
-                    integrationPlugin.refreshFileStatus(file.getFile());
-                } catch (Exception e) {
-                    logger.warn("Error occured while reverting changes for file " + file.getFile(),
-                                e);
-                }
+            protected Void doInBackground() {
+                integrationPlugin.revertFileChanges(file.getFile());
+                integrationPlugin.refreshFileStatus(file.getFile());
                 return null;
             }
         }.execute();
@@ -118,13 +124,8 @@ public class VCSPluginUI implements PluginUI {
         FileVCSStatus file = fileList.getSelectedValue();
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    integrationPlugin.refreshFileStatus(file.getFile());
-                } catch (Exception e) {
-                    logger.warn("Error occured while refreshing status for file " + file.getFile(),
-                                e);
-                }
+            protected Void doInBackground() {
+                integrationPlugin.refreshFileStatus(file.getFile());
                 return null;
             }
         }.execute();
@@ -135,7 +136,7 @@ public class VCSPluginUI implements PluginUI {
         return Optional.of(new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
-                refreshAllFiles();
+                refreshTrackedFiles();
             }
 
             @Override
@@ -174,6 +175,14 @@ public class VCSPluginUI implements PluginUI {
         refreshButton.setText("");
         refreshButton.setToolTipText("Refresh");
         toolBar1.add(refreshButton);
+        commitButton = new JButton();
+        commitButton.setIcon(new ImageIcon(getClass().getResource("/icons/upload-button.png")));
+        commitButton.setText("");
+        toolBar1.add(commitButton);
+        updateButton = new JButton();
+        updateButton.setIcon(new ImageIcon(getClass().getResource("/icons/download-button.png")));
+        updateButton.setText("");
+        toolBar1.add(updateButton);
         final JScrollPane scrollPane1 = new JScrollPane();
         scrollPane1.setPreferredSize(new Dimension(0, 0));
         mainPanel.add(scrollPane1, BorderLayout.CENTER);

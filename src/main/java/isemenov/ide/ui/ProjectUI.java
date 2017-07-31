@@ -7,13 +7,27 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ProjectUI {
+    private final Project project;
+
     private JPanel mainPanel;
     private JButton refreshTreeButton;
 
     public ProjectUI(ApplicationUIMenu applicationMenu, Project project) {
+        this.project = project;
+
         TabbedFileEditorUI editorView = new TabbedFileEditorUI(applicationMenu, project.getFileEditor());
         mainPanel.add(editorView.$$$getRootComponent$$$(), BorderLayout.CENTER);
-        refreshTreeButton.addActionListener(e -> project.refreshProjectFiles());
+        refreshTreeButton.addActionListener(e -> refreshProjectFiles());
+    }
+
+    public void refreshProjectFiles() {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                project.refreshProjectFiles();
+                return null;
+            }
+        }.execute();
     }
 
     {
