@@ -75,11 +75,18 @@ public class VCSFileStatusTracker {
             }
 
 
-            Map<Path, VCSFileStatus> updatedFiles = vcsService.getStatuses(foundTrackedFiles);
-            trackedFiles.putAll(updatedFiles);
+            Map<Path, VCSFileStatus> statuses = vcsService.getStatuses(foundTrackedFiles);
+            Map<Path, VCSFileStatus> updated = new HashMap<>();
+            //Need for concurrent updates
+            for (Map.Entry<Path, VCSFileStatus> entry : statuses.entrySet()) {
+                trackedFiles.computeIfPresent(entry.getKey(), (path, fileStatus) -> {
+                    updated.put(entry.getKey(), entry.getValue());
+                    return entry.getValue();
+                });
+            }
             eventManager.fireEventListeners(this,
                                             new VCSTrackingListChangedEvent(Collections.emptyMap(),
-                                                                            updatedFiles,
+                                                                            updated,
                                                                             Collections.emptySet()));
         } catch (VCSException e) {
             logger.warn("Cannot get files statuses", e);

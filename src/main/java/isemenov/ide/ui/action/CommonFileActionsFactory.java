@@ -1,6 +1,7 @@
 package isemenov.ide.ui.action;
 
-import isemenov.ide.FileDeleteExceptionException;
+import isemenov.ide.CannotDeleteFilesException;
+import isemenov.ide.FileTreeReadingException;
 import isemenov.ide.Project;
 import isemenov.ide.ui.ErrorHandlerUI;
 
@@ -22,13 +23,13 @@ public class CommonFileActionsFactory {
         actions.add(new AbstractAction("Delete") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new SwingWorker<Void, Void>(){
+                new SwingWorker<Void, Void>() {
                     @Override
-                    protected Void doInBackground() throws Exception {
+                    protected Void doInBackground() {
                         try {
                             project.deleteFile(file);
-                        } catch (FileDeleteExceptionException e1) {
-                            ErrorHandlerUI.showError(e1);
+                        } catch (CannotDeleteFilesException | FileTreeReadingException ex) {
+                            ErrorHandlerUI.showError(ex);
                         }
                         return null;
                     }

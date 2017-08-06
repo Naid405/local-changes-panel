@@ -5,7 +5,9 @@ import isemenov.ide.event.editor.EditorFileClosedEvent;
 import isemenov.ide.event.editor.EditorFileOpenedEvent;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class MultipleFileEditor {
     private final EventManager globalEventManager;
@@ -13,6 +15,7 @@ public class MultipleFileEditor {
     private final Map<Path, FileEditor> openedFiles;
 
     public MultipleFileEditor(EventManager globalEventManager) {
+        Objects.requireNonNull(globalEventManager);
         this.globalEventManager = globalEventManager;
         this.openedFiles = new HashMap<>();
     }

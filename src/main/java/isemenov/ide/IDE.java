@@ -27,12 +27,11 @@ public class IDE {
     private final EventManager globalIdeEventManager;
     private final Path projectPath;
 
-    private boolean started;
+    private volatile boolean started;
 
-    private Project project;
-
-    private MultipleFileEditor fileEditor;
-    private VCSFileStatusTracker fileStatusTracker;
+    private volatile Project project;
+    private volatile MultipleFileEditor fileEditor;
+    private volatile VCSFileStatusTracker fileStatusTracker;
 
     public IDE(Path projectPath, EventManager globalIdeEventManager) {
         Objects.requireNonNull(projectPath);
@@ -96,7 +95,7 @@ public class IDE {
 
     public boolean isCurrentlyOpenProject(Path projectDirectoryPath) {
         Objects.requireNonNull(projectDirectoryPath);
-        return project.getProjectDirectoryPath().compareTo(projectDirectoryPath) == 0;
+        return getProject().getProjectDirectoryPath().compareTo(projectDirectoryPath) == 0;
     }
 
     public Project getProject() {

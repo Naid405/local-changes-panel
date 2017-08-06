@@ -65,7 +65,6 @@ public class OpenProjectAction extends AbstractAction {
             globalEventManager.addEventListener(LoadingStartedEvent.class, event -> ui.showLoading());
             globalEventManager.addEventListener(LoadingCompletedEvent.class, event -> ui.initialize());
 
-            //Close previous IDE instance
             closePrevious();
             ui.setVisible(true);
             new SwingWorker<Void, Void>() {
