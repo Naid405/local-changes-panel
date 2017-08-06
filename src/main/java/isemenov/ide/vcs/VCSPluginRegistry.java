@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Not a "real world" class. Should be substituted by "plugin loader" in real implementation.
+ */
 public class VCSPluginRegistry {
     public final static String VCS_NAME = "git";
 

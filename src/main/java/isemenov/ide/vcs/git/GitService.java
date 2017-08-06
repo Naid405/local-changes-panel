@@ -17,6 +17,7 @@ public class GitService implements VCSService {
 
     private final static String GIT_MERGE_UNCHANGED_RESPONSE = "Already up-to-date.";
     private final static String GIT_REBASE_UNCHANGED_RESPONSE = "Current branch master is up to date.";
+    private final static String NONEXISTEN_FILES_ERROR_PART = "fatal: Not a valid object name";
 
     private final ShellCommandExecutor commandExecutor;
     private final Path workDirPath;
@@ -133,8 +134,10 @@ public class GitService implements VCSService {
                                            "HEAD:" + getRelativeFilePath(file).replace('\\', '/'));
             return true;
         } catch (CommandExecutionException e) {
+            if (e.getMessage().contains(NONEXISTEN_FILES_ERROR_PART))
+                return false;
             logger.warn(e.getMessage(), e);
-            return false;
+            throw new CannotExecuteVCSOperation(e);
         }
     }
 
@@ -191,13 +194,11 @@ public class GitService implements VCSService {
      * @param updateType how to perform merging of changes
      * @param cleanTree  how to prepare work tree for update if at all
      * @return true if project was updated, false if update was not required
-     * @throws NoTrackedBranchException      if there's no remote branch for local
-     * @throws MalformedGitResponseException if there's something wrong with response
-     * @throws CannotExecuteVCSOperation     if execution failed (exit code != 0)
+     * @throws NoTrackedBranchException  if there's no remote branch for local
+     * @throws CannotExecuteVCSOperation if execution failed (exit code != 0)
      */
     public boolean updateProject(UpdateType updateType,
-                                 CleanTreeType cleanTree) throws MalformedGitResponseException,
-                                                                 CannotExecuteVCSOperation,
+                                 CleanTreeType cleanTree) throws CannotExecuteVCSOperation,
                                                                  NoTrackedBranchException {
         try {
             if (remoteBranch == null)

@@ -1,14 +1,9 @@
 package isemenov.ide.vcs.git;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * Support class for parsing Git status lines
  */
 public class GitStatusLine {
-    private final static Pattern TWO_FILE_PATTERN = Pattern.compile("(?<firstFilePath>.*) -> (?<secondFilePath>.*)");
-
     private Character indexStatus;
     private Character workTreeStatus;
     private String filePath;
@@ -19,15 +14,15 @@ public class GitStatusLine {
         parsedStatusLine.setIndexStatus(statusLine.charAt(0));
         parsedStatusLine.setWorkTreeStatus(statusLine.charAt(1));
 
-        if (parsedStatusLine.getIndexStatus().equals('R') || parsedStatusLine.getIndexStatus().equals('C')) {
-            Matcher matcher = TWO_FILE_PATTERN.matcher(statusLine.substring(3));
-            if (!matcher.find())
-                throw new MalformedGitStatusLineException(statusLine);
+        String[] paths = statusLine.substring(3).split(" -> ");
+        if (paths.length < 1)
+            throw new MalformedGitStatusLineException(statusLine);
 
-            parsedStatusLine.setFilePath(matcher.group("secondFilePath"));
-            parsedStatusLine.setFilePathFrom(matcher.group("firstFilePath"));
+        if (paths.length > 1) {
+            parsedStatusLine.setFilePath(paths[1]);
+            parsedStatusLine.setFilePathFrom(paths[0]);
         } else {
-            parsedStatusLine.setFilePath(statusLine.substring(3));
+            parsedStatusLine.setFilePath(paths[0]);
         }
         return parsedStatusLine;
     }

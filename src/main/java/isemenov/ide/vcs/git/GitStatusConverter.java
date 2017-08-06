@@ -68,6 +68,10 @@ public final class GitStatusConverter {
                         return VCSFileStatus.NEW;
                     case 'D':
                         return VCSFileStatus.DELETED;
+                    //IDEA shows "modified" for R and C
+                    //but this application uses "git status [file]" to get status of singular file
+                    //so to keep result of parsing "git status" and "git status [file]" the same
+                    //it will show renamed and copied files as new
                     case 'R':
                         return VCSFileStatus.NEW;
                     case 'C':
@@ -78,8 +82,6 @@ public final class GitStatusConverter {
                                 return VCSFileStatus.MODIFIED;
                             case 'D':
                                 return VCSFileStatus.DELETED;
-                            case ' ':
-
                             default:
                                 return VCSFileStatus.UNKNOWN;
                         }

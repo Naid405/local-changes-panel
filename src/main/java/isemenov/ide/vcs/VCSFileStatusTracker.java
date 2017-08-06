@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class VCSFileStatusTracker {
     private final static Logger logger = LogManager.getLogger(VCSFileStatusTracker.class);
@@ -17,7 +18,7 @@ public class VCSFileStatusTracker {
 
     private final String vcsName;
     private final VCSService vcsService;
-    private final Map<Path, VCSFileStatus> trackedFiles;
+    private final ConcurrentMap<Path, VCSFileStatus> trackedFiles;
 
     public VCSFileStatusTracker(String vcsName,
                                 Project project,
@@ -43,6 +44,10 @@ public class VCSFileStatusTracker {
         return vcsService;
     }
 
+    public Map<Path, VCSFileStatus> getTrackedFiles() {
+        return Collections.unmodifiableMap(trackedFiles);
+    }
+
     public void startTrackingFile(Path file) {
         VCSFileStatus status = getVcsFileStatus(file);
         trackedFiles.compute(file, (path, fileStatus) -> {
@@ -56,11 +61,20 @@ public class VCSFileStatusTracker {
 
     public void refreshAllTrackedFileStatuses() {
         try {
-            trackedFiles.putAll(vcsService.getStatuses(new HashSet<>(trackedFiles.keySet())));
-            eventManager.fireEventListeners(this,
-                                            new VCSTrackingListChangedEvent(Collections.emptyMap(),
-                                                                            trackedFiles,
-                                                                            Collections.emptySet()));
+            Map<Path, VCSFileStatus> statuses = vcsService.getStatuses(trackedFiles.keySet());
+            Map<Path, VCSFileStatus> updated = new HashMap<>();
+            //Need for concurrent updates
+            for (Map.Entry<Path, VCSFileStatus> entry : statuses.entrySet()) {
+                trackedFiles.computeIfPresent(entry.getKey(), (path, fileStatus) -> {
+                    updated.put(entry.getKey(), entry.getValue());
+                    return entry.getValue();
+                });
+            }
+            if (updated.size() > 0)
+                eventManager.fireEventListeners(this,
+                                                new VCSTrackingListChangedEvent(Collections.emptyMap(),
+                                                                                updated,
+                                                                                Collections.emptySet()));
         } catch (VCSException e) {
             logger.warn("Cannot get files statuses", e);
         }
@@ -84,10 +98,11 @@ public class VCSFileStatusTracker {
                     return entry.getValue();
                 });
             }
-            eventManager.fireEventListeners(this,
-                                            new VCSTrackingListChangedEvent(Collections.emptyMap(),
-                                                                            updated,
-                                                                            Collections.emptySet()));
+            if (updated.size() > 0)
+                eventManager.fireEventListeners(this,
+                                                new VCSTrackingListChangedEvent(Collections.emptyMap(),
+                                                                                updated,
+                                                                                Collections.emptySet()));
         } catch (VCSException e) {
             logger.warn("Cannot get files statuses", e);
         }
@@ -104,6 +119,25 @@ public class VCSFileStatusTracker {
         });
     }
 
+    public void checkRemovedFiles(Set<Path> removedFiles) {
+        Set<Path> removed = new HashSet<>();
+        Map<Path, VCSFileStatus> notRemoved = new HashMap<>();
+        for (Path file : removedFiles) {
+            try {
+                if (!vcsService.checkExists(file)) {
+                    removed.add(file);
+                } else notRemoved.put(file, getVcsFileStatus(file));
+            } catch (VCSException e) {
+                logger.warn("Cannot check possibly removed file " + file.toString(), e);
+            }
+        }
+        trackedFiles.keySet().removeAll(removed);
+        eventManager.fireEventListeners(this,
+                                        new VCSTrackingListChangedEvent(Collections.emptyMap(),
+                                                                        notRemoved,
+                                                                        removed));
+    }
+
     private VCSFileStatus getVcsFileStatus(Path file) {
         VCSFileStatus status = VCSFileStatus.UNKNOWN;
         try {
@@ -112,27 +146,5 @@ public class VCSFileStatusTracker {
             logger.warn("Cannot get file status", e);
         }
         return status;
-    }
-
-    public void checkRemovedFiles(Set<Path> removedFiles) {
-        Set<Path> removed = new HashSet<>();
-        Map<Path, VCSFileStatus> notRemoved = new HashMap<>();
-        for (Path file : removedFiles) {
-            try {
-                if (!vcsService.checkExists(file))
-                    removed.add(file);
-                else notRemoved.put(file, getVcsFileStatus(file));
-            } catch (VCSException e) {
-                logger.warn("Cannot check possibly removed file " + file.toString(), e);
-            }
-        }
-        eventManager.fireEventListeners(this,
-                                        new VCSTrackingListChangedEvent(Collections.emptyMap(),
-                                                                        notRemoved,
-                                                                        removed));
-    }
-
-    public Map<Path, VCSFileStatus> getTrackedFiles() {
-        return Collections.unmodifiableMap(trackedFiles);
     }
 }
