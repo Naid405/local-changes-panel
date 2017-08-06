@@ -38,8 +38,8 @@ public class LoadingDialog extends JDialog {
                 } catch (ExecutionException e) {
                     dispose();
                     JOptionPane.showMessageDialog(null,
-                                                  e.getCause().getMessage(),
-                                                  "Error while updating project",
+                                                  e.getMessage(),
+                                                  "Error!",
                                                   JOptionPane.ERROR_MESSAGE);
                 }
             }

@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="isemenov.ide.vcs.git.ui.GitUpdateDialog">
   <grid id="cbd77" binding="contentPane" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="48" y="54" width="246" height="152"/>
+      <xy x="48" y="54" width="246" height="124"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -19,33 +19,13 @@
             <children>
               <component id="4a871" class="javax.swing.JRadioButton" binding="mergeRadioButton" default-binding="true">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <actionCommand value="MERGE"/>
-                  <text value="Merge" noi18n="true"/>
-                </properties>
-              </component>
-              <component id="e8c18" class="javax.swing.JRadioButton" binding="rebaseRadioButton" default-binding="true">
-                <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
-                  <actionCommand value="REBASE"/>
-                  <text value="Rebase" noi18n="true"/>
-                </properties>
-              </component>
-              <component id="5990c" class="javax.swing.JRadioButton" binding="defaultRadioButton" default-binding="true">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <actionCommand value="DEFAULT"/>
+                  <actionCommand value="MERGE"/>
                   <selected value="true"/>
-                  <text value="Default" noi18n="true"/>
+                  <text value="Merge" noi18n="true"/>
                 </properties>
               </component>
               <component id="c73eb" class="javax.swing.JLabel">
@@ -55,6 +35,17 @@
                 </constraints>
                 <properties>
                   <text value="Update type"/>
+                </properties>
+              </component>
+              <component id="e8c18" class="javax.swing.JRadioButton" binding="rebaseRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="REBASE"/>
+                  <selected value="false"/>
+                  <text value="Rebase" noi18n="true"/>
                 </properties>
               </component>
             </children>
@@ -111,7 +102,7 @@
               <component id="e7465" class="javax.swing.JButton" binding="buttonOK">
                 <constraints/>
                 <properties>
-                  <text value="OK"/>
+                  <text value="Update"/>
                 </properties>
               </component>
               <component id="5723f" class="javax.swing.JButton" binding="buttonCancel">

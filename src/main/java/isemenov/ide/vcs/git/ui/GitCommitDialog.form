@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="isemenov.ide.vcs.git.ui.GitCommitDialog">
+  <grid id="cbd77" binding="contentPane" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="48" y="54" width="500" height="208"/>
+    </constraints>
+    <properties>
+      <minimumSize width="500" height="208"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <grid id="e3588" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="20f96" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="South"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="ae704" class="javax.swing.JLabel">
+                <constraints border-constraint="Center"/>
+                <properties>
+                  <text value="Commit message (required)"/>
+                </properties>
+              </component>
+              <component id="72b61" class="javax.swing.JTextField" binding="commitMessageField">
+                <constraints border-constraint="South"/>
+                <properties>
+                  <minimumSize width="14" height="50"/>
+                  <preferredSize width="14" height="50"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <scrollpane id="43e61">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="f77c5" class="javax.swing.JList" binding="fileList">
+                <constraints/>
+                <properties>
+                  <minimumSize width="0" height="100"/>
+                  <preferredSize width="0" height="100"/>
+                  <selectionMode value="0"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+        </children>
+      </grid>
+      <grid id="94766" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="South"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="9538f" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+            <constraints border-constraint="South"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="e7465" class="javax.swing.JButton" binding="buttonCommit">
+                <constraints/>
+                <properties>
+                  <text value="Commit"/>
+                </properties>
+              </component>
+              <component id="ba3c3" class="javax.swing.JButton" binding="buttonCommitPush">
+                <constraints/>
+                <properties>
+                  <text value="Commit,Push"/>
+                </properties>
+              </component>
+              <component id="5723f" class="javax.swing.JButton" binding="buttonCancel">
+                <constraints/>
+                <properties>
+                  <text value="Cancel"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

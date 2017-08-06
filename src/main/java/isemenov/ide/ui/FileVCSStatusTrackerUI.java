@@ -78,7 +78,7 @@ public class FileVCSStatusTrackerUI {
                 return null;
             }
         }.execute());
-        for (Action action : actionsFactory.getCommonActions()) {
+        for (Action action : actionsFactory.getCommonActions(tracker)) {
             toolbar.add(new JButton(action));
         }
     }
@@ -100,7 +100,13 @@ public class FileVCSStatusTrackerUI {
         return new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
-                tracker.refreshAllTrackedFileStatuses();
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() {
+                        tracker.refreshAllTrackedFileStatuses();
+                        return null;
+                    }
+                }.execute();
             }
 
             @Override

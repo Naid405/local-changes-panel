@@ -131,4 +131,8 @@ public class VCSFileStatusTracker {
                                                                         notRemoved,
                                                                         removed));
     }
+
+    public Map<Path, VCSFileStatus> getTrackedFiles() {
+        return Collections.unmodifiableMap(trackedFiles);
+    }
 }

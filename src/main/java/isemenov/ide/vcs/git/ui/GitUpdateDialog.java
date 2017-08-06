@@ -18,7 +18,6 @@ public class GitUpdateDialog extends JDialog {
 
     private JRadioButton mergeRadioButton;
     private JRadioButton rebaseRadioButton;
-    private JRadioButton defaultRadioButton;
 
     private JRadioButton autoStashRadioButton;
     private JRadioButton noRadioButton;
@@ -37,7 +36,6 @@ public class GitUpdateDialog extends JDialog {
         updateTypeGroup = new ButtonGroup();
         updateTypeGroup.add(mergeRadioButton);
         updateTypeGroup.add(rebaseRadioButton);
-        updateTypeGroup.add(defaultRadioButton);
 
         cleanTreeGroup = new ButtonGroup();
         cleanTreeGroup.add(autoStashRadioButton);
@@ -107,30 +105,14 @@ public class GitUpdateDialog extends JDialog {
         mainPanel.add(panel1);
         mergeRadioButton = new JRadioButton();
         mergeRadioButton.setActionCommand("MERGE");
+        mergeRadioButton.setSelected(true);
         mergeRadioButton.setText("Merge");
         GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        panel1.add(mergeRadioButton, gbc);
-        rebaseRadioButton = new JRadioButton();
-        rebaseRadioButton.setActionCommand("REBASE");
-        rebaseRadioButton.setText("Rebase");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        panel1.add(rebaseRadioButton, gbc);
-        defaultRadioButton = new JRadioButton();
-        defaultRadioButton.setActionCommand("DEFAULT");
-        defaultRadioButton.setSelected(true);
-        defaultRadioButton.setText("Default");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.anchor = GridBagConstraints.WEST;
-        panel1.add(defaultRadioButton, gbc);
+        panel1.add(mergeRadioButton, gbc);
         final JLabel label1 = new JLabel();
         label1.setText("Update type");
         gbc = new GridBagConstraints();
@@ -138,6 +120,15 @@ public class GitUpdateDialog extends JDialog {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         panel1.add(label1, gbc);
+        rebaseRadioButton = new JRadioButton();
+        rebaseRadioButton.setActionCommand("REBASE");
+        rebaseRadioButton.setSelected(false);
+        rebaseRadioButton.setText("Rebase");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel1.add(rebaseRadioButton, gbc);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridBagLayout());
         mainPanel.add(panel2);
@@ -172,7 +163,7 @@ public class GitUpdateDialog extends JDialog {
         panel4.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         panel3.add(panel4, BorderLayout.CENTER);
         buttonOK = new JButton();
-        buttonOK.setText("OK");
+        buttonOK.setText("Update");
         panel4.add(buttonOK);
         buttonCancel = new JButton();
         buttonCancel.setText("Cancel");

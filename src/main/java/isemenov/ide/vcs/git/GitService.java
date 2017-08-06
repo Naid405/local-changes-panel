@@ -6,12 +6,17 @@ import isemenov.ide.event.core.FilesPossiblyChangedEvent;
 import isemenov.ide.util.CommandExecutionException;
 import isemenov.ide.util.ShellCommandExecutor;
 import isemenov.ide.vcs.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.*;
 
 public class GitService implements VCSService {
-    private final static String GIT_FETCH_UNCHANGED_RESPONSE = "Already up-to-date.";
+    private final static Logger logger = LogManager.getLogger(GitService.class);
+
+    private final static String GIT_MERGE_UNCHANGED_RESPONSE = "Already up-to-date.";
+    private final static String GIT_REBASE_UNCHANGED_RESPONSE = "Current branch master is up to date.";
 
     private final ShellCommandExecutor commandExecutor;
     private final Path workDirPath;
@@ -51,6 +56,7 @@ public class GitService implements VCSService {
                 }
             }
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
     }
@@ -68,6 +74,7 @@ public class GitService implements VCSService {
             if (!response.get(0).equals("true"))
                 throw new NotVCSRootException(path);
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
     }
@@ -97,6 +104,7 @@ public class GitService implements VCSService {
                     entry.setValue(VCSFileStatus.UNCHANGED);
             }
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
         return Collections.unmodifiableMap(map);
@@ -125,6 +133,7 @@ public class GitService implements VCSService {
                                            "HEAD:" + getRelativeFilePath(file).replace('\\', '/'));
             return true;
         } catch (CommandExecutionException e) {
+            logger.warn(e.getMessage(), e);
             return false;
         }
     }
@@ -141,6 +150,7 @@ public class GitService implements VCSService {
                                                     "--ignored",
                                                     getRelativeFilePath(filePath));
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
         return getStatusFromString(result.size() > 0 ? result.get(0) : null);
@@ -170,6 +180,7 @@ public class GitService implements VCSService {
                                                        new FilesPossiblyChangedEvent(
                                                                Collections.singleton(filePath)));
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
     }
@@ -192,58 +203,91 @@ public class GitService implements VCSService {
             if (remoteBranch == null)
                 throw new NoTrackedBranchException(localBranch);
 
-            List<String> result = commandExecutor.executeCommand(workDirPath,
-                                                                 "git", "fetch", "--prune");
-
-            if (result.size() < 1)
-                throw new MalformedGitResponseException();
-
-            String fetchResponse = result.get(0);
-            if (fetchResponse.equals(GIT_FETCH_UNCHANGED_RESPONSE)) {
-                return false;
-            }
+            commandExecutor.executeCommand(workDirPath, "git", "fetch", "--prune");
 
             List<String> command = new ArrayList<>();
             command.add("git");
-            command.add("merge");
-            command.add(remoteBranch);
 
             switch (updateType) {
                 case MERGE:
-                    command.add("--rebase=false");
+                    command.add("merge");
                     break;
                 case REBASE:
-                    command.add("--rebase=true");
-                    break;
-                case DEFAULT:
-                    break;
-            }
-
-            switch (cleanTree) {
-                case STASH:
-                    command.add("--autostash");
-                    break;
-                case NO:
+                    command.add("rebase");
+                    switch (cleanTree) {
+                        case STASH:
+                            command.add("--autostash");
+                            break;
+                        case NO:
+                            break;
+                    }
                     break;
             }
 
-            commandExecutor.executeCommand(workDirPath, command.toArray(new String[command.size()]));
+            command.add(remoteBranch);
+
+            List<String> result = commandExecutor
+                    .executeCommand(workDirPath, command.toArray(new String[command.size()]));
+
+            if (result.size() > 0 &&
+                    ((updateType == UpdateType.MERGE && result.get(0).equals(GIT_MERGE_UNCHANGED_RESPONSE))
+                            || (updateType == UpdateType.REBASE && result.get(0)
+                                                                         .equals(GIT_REBASE_UNCHANGED_RESPONSE)))) {
+                return false;
+            }
             globalEventManager.fireEventListenersAsync(this, new AllFilesPossiblyChangedEvent());
             return true;
         } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
             throw new CannotExecuteVCSOperation(e);
         }
     }
 
     public enum UpdateType {
         MERGE,
-        REBASE,
-        DEFAULT
+        REBASE
     }
 
     public enum CleanTreeType {
         STASH,
         NO
+    }
+
+    public void commitFiles(String commitMessage, Set<Path> filesToCommit) throws CannotExecuteVCSOperation,
+                                                                                  FileNotInWorkingTreeException {
+        try {
+            List<String> command = new ArrayList<>();
+            command.add("git");
+            command.add("commit");
+            command.add("--no-edit");
+            command.add("--only");
+            command.add("--message=" + commitMessage);
+            command.add("--");
+
+            for (Path path : filesToCommit) {
+                command.add(getRelativeFilePath(path));
+            }
+
+            commandExecutor.executeCommand(workDirPath,
+                                           command.toArray(new String[command.size()]));
+            globalEventManager.fireEventListenersAsync(this,
+                                                       new FilesPossiblyChangedEvent(filesToCommit));
+        } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
+            throw new CannotExecuteVCSOperation(e);
+        }
+    }
+
+    public void push() throws CannotExecuteVCSOperation {
+        try {
+            commandExecutor.executeCommand(workDirPath,
+                                           "git",
+                                           "push",
+                                           "origin");
+        } catch (CommandExecutionException e) {
+            logger.error(e.getMessage(), e);
+            throw new CannotExecuteVCSOperation(e);
+        }
     }
 
     private String getRelativeFilePath(Path path) throws FileNotInWorkingTreeException {

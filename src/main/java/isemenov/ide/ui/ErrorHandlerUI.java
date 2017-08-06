@@ -15,11 +15,11 @@ public class ErrorHandlerUI {
 
     }
 
-    public static void showWarning(Throwable e) {
+    public static void showWarning(String warning) {
         if (!SwingUtilities.isEventDispatchThread())
-            SwingUtilities.invokeLater(() -> showWarning(e));
+            SwingUtilities.invokeLater(() -> showWarning(warning));
 
-        JOptionPane.showMessageDialog(null, e.getMessage(), "Warning",
+        JOptionPane.showMessageDialog(null, warning, "Warning",
                                       JOptionPane.WARNING_MESSAGE);
     }
 }

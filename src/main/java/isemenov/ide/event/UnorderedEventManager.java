@@ -10,9 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
-/**
- * To use for simple notification
- */
 public class UnorderedEventManager implements EventManager {
     private static final Logger logger = LogManager.getLogger(UnorderedEventManager.class);
 
@@ -28,7 +25,7 @@ public class UnorderedEventManager implements EventManager {
         Objects.requireNonNull(event);
 
         logger.debug("Event occured - source: " + source.getClass().toString() +
-                            " event: " + event.getClass().toString());
+                             " event: " + event.getClass().toString());
         Set<Consumer<Event>> listeners = eventListeners.get(event.getClass());
         if (listeners == null || listeners.isEmpty())
             return;

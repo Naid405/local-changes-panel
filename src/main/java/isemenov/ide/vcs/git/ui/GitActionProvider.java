@@ -1,9 +1,9 @@
 package isemenov.ide.vcs.git.ui;
 
 import isemenov.ide.ui.ErrorHandlerUI;
-import isemenov.ide.ui.IDEUI;
 import isemenov.ide.vcs.VCSException;
 import isemenov.ide.vcs.VCSFileStatus;
+import isemenov.ide.vcs.VCSFileStatusTracker;
 import isemenov.ide.vcs.VCSUIActionFactory;
 import isemenov.ide.vcs.git.GitService;
 
@@ -11,7 +11,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GitActionProvider implements VCSUIActionFactory {
     private final GitService service;
@@ -21,12 +23,26 @@ public class GitActionProvider implements VCSUIActionFactory {
     }
 
     @Override
-    public List<Action> getCommonActions() {
+    public List<Action> getCommonActions(VCSFileStatusTracker tracker) {
         ArrayList<Action> actions = new ArrayList<>();
         actions.add(new AbstractAction(null, new ImageIcon(this.getClass().getResource("/icons/upload-button.png"))) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Commit
+                Map<Path, VCSFileStatus> trackedFiles = tracker.getTrackedFiles();
+                Map<Path, VCSFileStatus> filesToCommit = new HashMap<>();
+                for (Map.Entry<Path, VCSFileStatus> entry : trackedFiles.entrySet()) {
+                    if (entry.getValue() != VCSFileStatus.UNCHANGED
+                            && entry.getValue() != VCSFileStatus.UNTRACKED
+                            && entry.getValue() != VCSFileStatus.IGNORED
+                            && entry.getValue() != VCSFileStatus.UNKNOWN)
+                        filesToCommit.put(entry.getKey(), entry.getValue());
+                }
+                if (filesToCommit.isEmpty()) {
+                    ErrorHandlerUI.showWarning("Nothing to commit");
+                    return;
+                }
+                GitCommitDialog commitDialog = new GitCommitDialog(service, filesToCommit);
+                commitDialog.setVisible(true);
             }
         });
         actions.add(new AbstractAction(null, new ImageIcon(this.getClass().getResource("/icons/download-button.png"))) {

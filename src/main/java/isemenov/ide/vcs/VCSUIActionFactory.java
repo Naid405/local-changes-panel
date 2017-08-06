@@ -13,7 +13,7 @@ public interface VCSUIActionFactory {
      *
      * @return list of actions
      */
-    List<Action> getCommonActions();
+    List<Action> getCommonActions(VCSFileStatusTracker tracker);
 
     /**
      * Actions for context menu
