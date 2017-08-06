@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="isemenov.ide.ui.ProjectViewUI">
+  <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <toolbar id="68e62">
+        <constraints border-constraint="North"/>
+        <properties>
+          <floatable value="false"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <component id="e4cff" class="javax.swing.JButton" binding="refreshTreeButton">
+            <constraints/>
+            <properties>
+              <focusable value="false"/>
+              <text value="Refresh File Tree"/>
+            </properties>
+          </component>
+        </children>
+      </toolbar>
+      <scrollpane id="7886b">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="a1abb" class="javax.swing.JTree" binding="fileTree">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+    </children>
+  </grid>
+</form>

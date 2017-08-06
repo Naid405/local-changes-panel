@@ -10,36 +10,44 @@
       <splitpane id="9db3b">
         <constraints border-constraint="Center"/>
         <properties>
+          <dividerLocation value="400"/>
           <orientation value="0"/>
         </properties>
         <border type="none"/>
         <children>
-          <grid id="8d160" binding="projectPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <splitpane id="7def3">
             <constraints>
               <splitpane position="left"/>
             </constraints>
-            <properties>
-              <preferredSize width="0" height="500"/>
-            </properties>
+            <properties/>
             <border type="none"/>
             <children>
-              <component id="535a1" class="javax.swing.JLabel">
-                <constraints border-constraint="Center"/>
-                <properties>
-                  <horizontalAlignment value="0"/>
-                  <text value="Use &quot;File&quot; menu to open a project" noi18n="true"/>
-                </properties>
-              </component>
+              <grid id="8d160" binding="projectViewPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <splitpane position="left"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <grid id="ef2a3" binding="fileEditorPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <splitpane position="right"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
             </children>
-          </grid>
-          <tabbedpane id="7127f" binding="pluginPane">
+          </splitpane>
+          <grid id="e5285" binding="fileStatusTrackerPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
               <splitpane position="right"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
-          </tabbedpane>
+          </grid>
         </children>
       </splitpane>
     </children>

@@ -1,159 +1,125 @@
 package isemenov.ide.ui;
 
-import isemenov.ide.DocumentEditor;
 import isemenov.ide.FileEditor;
-import isemenov.ide.event.ide.editor.EditorFileClosedEvent;
-import isemenov.ide.event.ide.editor.EditorFileOpenedEvent;
-import isemenov.ide.ui.action.JTreeNodeDoubleClickMouseAdapter;
-import isemenov.ide.ui.component.ApplicationUIMenu;
-import isemenov.ide.ui.component.CloseableChangeDisplayingTab;
+import isemenov.ide.FileReadingException;
+import isemenov.ide.MultipleFileEditor;
+import isemenov.ide.ui.component.FileEditorTab;
 
 import javax.swing.*;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.Objects;
 
 public class TabbedFileEditorUI {
-    private final FileEditor fileEditor;
+    private final MultipleFileEditor fileEditor;
 
     private JPanel mainPanel;
     private JTabbedPane tabbedPane;
-    private JTree fileTree;
+    private AbstractAction saveCurrentTabFileAction;
 
-    public TabbedFileEditorUI(ApplicationUIMenu applicationMenu,
-                              FileEditor fileEditor) {
+    public TabbedFileEditorUI(MultipleFileEditor fileEditor) {
         this.fileEditor = fileEditor;
 
-        fileTree.addMouseListener(new JTreeNodeDoubleClickMouseAdapter(treeNode -> {
-            DefaultMutableTreeNode fileTreeNode = (DefaultMutableTreeNode) treeNode;
-
-            if (fileTreeNode == null || fileTreeNode.getAllowsChildren()) return;
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() {
-                    Path filePath = (Path) fileTreeNode.getUserObject();
-                    if (fileEditor.openFile(filePath)) {
-                        fileEditor.readOpenedFileContent(filePath);
-                    } else {
-                        fileEditor.getEditorForFile(filePath).ifPresent(
-                                editor -> SwingUtilities.invokeLater(() -> tabbedPane.setSelectedIndex(
-                                        indexOfTabWithDocument(
-                                                editor.getDocument()))));
-                    }
-                    return null;
-                }
-            }.execute();
-        }));
-        fileTree.setModel(fileEditor.getFileTreeModel());
-
-        fileEditor.addFileOpenedListener(this::handleFileEditorOpened);
-        fileEditor.addFileClosedListener(this::handleFileEditorClosed);
-
-        applicationMenu.setSaveFileMenuItemActionListener(e -> saveCurrentlyOpenFile());
+        saveCurrentTabFileAction = new AbstractAction("Save file") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!fileEditor.hasOpenFiles())
+                    return;
+                FileEditorTab editorTab = (FileEditorTab) tabbedPane.getSelectedComponent();
+                editorTab.getSaveFileAction().actionPerformed(e);
+            }
+        };
     }
 
-    private void handleFileEditorOpened(EditorFileOpenedEvent fileOpenedEvent) {
-        DocumentEditor documentEditor = fileOpenedEvent.getDocumentEditor();
-
-        documentEditor.addDocumentChangedListener(
-                (event) ->
-                        SwingUtilities.invokeLater(() -> {
-                            int tabIndex = this.indexOfTabWithDocument(
-                                    event.getDocument());
-                            if (tabIndex >= 0) {
-                                ((CloseableChangeDisplayingTab) tabbedPane
-                                        .getTabComponentAt(tabIndex)).setChanged();
-                            }
-                        }));
-
-        documentEditor.addDocumentBeingSavedListener(
-                (event) ->
-                        SwingUtilities.invokeLater(() -> {
-                            int tabIndex = this.indexOfTabWithDocument(
-                                    event.getDocument());
-                            if (tabIndex >= 0)
-                                ((JScrollPane) tabbedPane.getComponentAt(
-                                        tabIndex)).getViewport().getView().setEnabled(
-                                        false);
-                        }));
-
-        documentEditor.addDocumentSavedListener(
-                (event) ->
-                        SwingUtilities.invokeLater(() -> {
-                            int tabIndex = this.indexOfTabWithDocument(
-                                    event.getDocument());
-                            if (tabIndex >= 0) {
-                                ((CloseableChangeDisplayingTab) tabbedPane
-                                        .getTabComponentAt(tabIndex)).setSaved();
-                                ((JScrollPane) tabbedPane.getComponentAt(tabIndex))
-                                        .getViewport().getView().setEnabled(true);
-                            }
-                        }));
-
+    public void createEditorTab(FileEditor editor) {
         SwingUtilities.invokeLater(
-                () ->
-                        this.openEditorTab(
-                                fileOpenedEvent.getFile().getFileName().toString(),
-                                documentEditor.getEditorKit(),
-                                documentEditor.getDocument(),
-                                (e) -> new SwingWorker<Void, Void>() {
-                                    @Override
-                                    protected Void doInBackground() throws Exception {
-                                        fileEditor.closeOpenedFile(fileOpenedEvent.getFile());
-                                        return null;
-                                    }
-                                }.execute()
-                        ));
+                () -> {
+                    FileEditorTab editorTab = new FileEditorTab(
+                            editor,
+                            (e) -> new SwingWorker<Void, Void>() {
+                                @Override
+                                protected Void doInBackground() throws Exception {
+                                    fileEditor.closeOpenedFile(editor.getFilePath());
+                                    return null;
+                                }
+                            }.execute());
+
+                    tabbedPane.addTab(editor.getFilePath().getFileName().toString(), editorTab);
+                    tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, editorTab.getTabHeader());
+                    tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+                    try {
+                        editorTab.readFile();
+                    } catch (FileReadingException e) {
+                        ErrorHandlerUI.showError(e);
+                    }
+                }
+        );
     }
 
-    private void handleFileEditorClosed(EditorFileClosedEvent fileClosedEvent) {
+    public void closeEditorTabForFile(Path filePath) {
         SwingUtilities.invokeLater(() -> {
-            int index = this.indexOfTabWithDocument(fileClosedEvent.getDocumentEditor().getDocument());
+            int index = this.indexOfFileTab(filePath);
             if (index >= 0)
                 tabbedPane.removeTabAt(index);
         });
     }
 
-    public void saveCurrentlyOpenFile() {
-        if (!fileEditor.hasOpenFiles())
-            return;
-        Document document = ((JTextPane) ((JScrollPane) tabbedPane.getSelectedComponent()).getViewport().getView()).getDocument();
-        Path file = (Path) document.getProperty(Document.StreamDescriptionProperty);
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() {
-                fileEditor.saveOpenedFileContent(file);
-                return null;
-            }
-        }.execute();
-    }
-
-    public void openEditorTab(String title, EditorKit editorKit, Document document, ActionListener closeTabListener) {
-        JTextPane textPane = new JTextPane();
-        textPane.setEditable(true);
-        textPane.setEditorKit(editorKit);
-        textPane.setDocument(document);
-        tabbedPane.addTab(title, new JScrollPane(textPane));
-
-        CloseableChangeDisplayingTab tabHeader = new CloseableChangeDisplayingTab(title);
-        tabHeader.addCrossButtonActionListener(closeTabListener);
-        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabHeader);
-
-        tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
-    }
-
-    public int indexOfTabWithDocument(Document document) {
+    private int indexOfFileTab(Path filePath) {
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-            if (Objects.equals(document,
-                               ((JTextPane) ((JScrollPane) tabbedPane.getComponentAt(
-                                       i)).getViewport().getView()).getDocument()))
+            if (Objects.equals(filePath, ((FileEditorTab) tabbedPane.getComponentAt(i)).getFilePath()))
                 return i;
         }
         return -1;
+    }
+
+    public void refreshFileContent(Path file) {
+        SwingUtilities.invokeLater(() -> {
+            int index = indexOfFileTab(file);
+            if (index >= 0) {
+                FileEditorTab editorTab = (FileEditorTab) tabbedPane.getComponentAt(index);
+                try {
+                    editorTab.readFile();
+                } catch (FileReadingException ex) {
+                    ErrorHandlerUI.showError(ex);
+                }
+            }
+        });
+    }
+
+    public void refreshAllFilesContent() {
+        SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                FileEditorTab editorTab = (FileEditorTab) tabbedPane.getComponentAt(i);
+                try {
+                    editorTab.readFile();
+                } catch (FileReadingException ex) {
+                    ErrorHandlerUI.showError(ex);
+                }
+            }
+        });
+    }
+
+    public Action getOpenFileAction(Path filePath) {
+        return new AbstractAction("Open file") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() {
+                        if (!fileEditor.openFile(filePath)) {
+                            SwingUtilities.invokeLater(() -> tabbedPane.setSelectedIndex(
+                                    indexOfFileTab(filePath)));
+                        }
+                        return null;
+                    }
+                }.execute();
+            }
+        };
+    }
+
+    public Action getSaveCurrentFileAction() {
+        return saveCurrentTabFileAction;
     }
 
     {
@@ -173,18 +139,8 @@ public class TabbedFileEditorUI {
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout(0, 0));
-        final JSplitPane splitPane1 = new JSplitPane();
-        mainPanel.add(splitPane1, BorderLayout.CENTER);
-        final JPanel panel1 = new JPanel();
-        panel1.setLayout(new BorderLayout(0, 0));
-        panel1.setPreferredSize(new Dimension(150, 0));
-        splitPane1.setLeftComponent(panel1);
-        final JScrollPane scrollPane1 = new JScrollPane();
-        panel1.add(scrollPane1, BorderLayout.CENTER);
-        fileTree = new JTree();
-        scrollPane1.setViewportView(fileTree);
         tabbedPane = new JTabbedPane();
-        splitPane1.setRightComponent(tabbedPane);
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
     }
 
     /**

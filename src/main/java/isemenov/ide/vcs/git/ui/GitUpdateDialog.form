@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="isemenov.ide.vcs.git.ui.GitUpdateDialog">
+  <grid id="cbd77" binding="contentPane" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="48" y="54" width="246" height="152"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="e3588" binding="mainPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+        <constraints border-constraint="North"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="1d4dd" layout-manager="GridBagLayout">
+            <constraints/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="4a871" class="javax.swing.JRadioButton" binding="mergeRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="MERGE"/>
+                  <text value="Merge" noi18n="true"/>
+                </properties>
+              </component>
+              <component id="e8c18" class="javax.swing.JRadioButton" binding="rebaseRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="REBASE"/>
+                  <text value="Rebase" noi18n="true"/>
+                </properties>
+              </component>
+              <component id="5990c" class="javax.swing.JRadioButton" binding="defaultRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="DEFAULT"/>
+                  <selected value="true"/>
+                  <text value="Default" noi18n="true"/>
+                </properties>
+              </component>
+              <component id="c73eb" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Update type"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="a7807" layout-manager="GridBagLayout">
+            <constraints/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="abfe6" class="javax.swing.JRadioButton" binding="noRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="NO"/>
+                  <selected value="true"/>
+                  <text value="No" noi18n="true"/>
+                </properties>
+              </component>
+              <component id="8ed22" class="javax.swing.JRadioButton" binding="autoStashRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="STASH"/>
+                  <text value="Auto-stash (rebase only)" noi18n="true"/>
+                </properties>
+              </component>
+              <component id="26d03" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Clean work tree?"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="94766" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="9538f" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="e7465" class="javax.swing.JButton" binding="buttonOK">
+                <constraints/>
+                <properties>
+                  <text value="OK"/>
+                </properties>
+              </component>
+              <component id="5723f" class="javax.swing.JButton" binding="buttonCancel">
+                <constraints/>
+                <properties>
+                  <text value="Cancel"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

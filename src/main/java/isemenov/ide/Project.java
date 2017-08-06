@@ -1,105 +1,113 @@
 package isemenov.ide;
 
-import isemenov.ide.event.ide.editor.ProjectFileEventsListener;
+import isemenov.ide.event.EventManager;
+import isemenov.ide.event.project.ProjectFileListChangedEvent;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 public class Project {
-    private final ErrorHandler errorHandler;
-
     private final Path projectDirectoryPath;
+    //File | isDirectory
+    private final Map<Path, Boolean> projectFiles;
 
-    private final FileEditor fileEditor;
+    private final EventManager globalEventManager;
 
-    private volatile Set<Path> projectFiles;
-
-    public Project(ErrorHandler errorHandler,
-                   Path projectDirectoryPath,
-                   FileEditor fileEditor) {
-        this.errorHandler = errorHandler;
+    public Project(Path projectDirectoryPath, EventManager globalEventManager) {
         Objects.requireNonNull(projectDirectoryPath);
-        Objects.requireNonNull(fileEditor);
+        Objects.requireNonNull(globalEventManager);
 
         this.projectDirectoryPath = projectDirectoryPath;
-        this.fileEditor = fileEditor;
-        this.projectFiles = ConcurrentHashMap.newKeySet();
+        this.globalEventManager = globalEventManager;
+        this.projectFiles = new LinkedHashMap<>();
     }
 
     public Path getProjectDirectoryPath() {
         return projectDirectoryPath;
     }
 
-    public FileEditor getFileEditor() {
-        return fileEditor;
+    public synchronized Map<Path, Boolean> getProjectFiles() {
+        return Collections.unmodifiableMap(projectFiles);
     }
 
-    public void refreshProjectFiles() {
-        Set<Path> deletedFiles;
-        Set<Path> projectFiles = new HashSet<>();
+    public synchronized void readFileTree() throws FileTreeReadingException {
+        final Set<Path> missingFiles = new HashSet<>(projectFiles.keySet());
 
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(projectDirectoryPath, true);
-        HashMap<Path, DefaultMutableTreeNode> directoryNodeMapping = new HashMap<>();
-        directoryNodeMapping.put(projectDirectoryPath, root);
+        final LinkedHashMap<Path, Boolean> newFiles = new LinkedHashMap<>();
 
         try {
-            synchronized (this) {
-                Files.walkFileTree(projectDirectoryPath, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                        Project.this.projectFiles.remove(dir);
+            Files.walkFileTree(projectDirectoryPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
+                    if (projectDirectoryPath.compareTo(path) == 0)
+                        return FileVisitResult.CONTINUE;
 
-                        if (!projectDirectoryPath.equals(dir)) {
-                            DefaultMutableTreeNode parent = directoryNodeMapping.get(dir.getParent());
-                            DefaultMutableTreeNode node = new FileTreeNode(dir, true);
-                            parent.add(node);
+                    if (!missingFiles.remove(path))
+                        newFiles.put(path, true);
+                    return FileVisitResult.CONTINUE;
+                }
 
-                            directoryNodeMapping.put(dir, node);
-                        }
-                        projectFiles.add(dir);
-                        return Thread.currentThread().isInterrupted() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-                    }
+                @Override
+                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                    if (!missingFiles.remove(path))
+                        newFiles.put(path, false);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
 
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Project.this.projectFiles.remove(file);
-
-                        DefaultMutableTreeNode parent = directoryNodeMapping.get(file.getParent());
-                        DefaultMutableTreeNode node = new FileTreeNode(file, false);
-                        parent.add(node);
-
-                        projectFiles.add(file);
-                        return Thread.currentThread().isInterrupted() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-                    }
-                });
-                deletedFiles = this.projectFiles;
-                this.projectFiles = projectFiles;
+            for (Path file : missingFiles) {
+                projectFiles.remove(file);
             }
-            for (Path deletedFile : deletedFiles) {
-                fileEditor.closeOpenedFile(deletedFile);
-            }
-            fileEditor.setFileTree(root);
+            projectFiles.putAll(newFiles);
+
+            globalEventManager.fireEventListeners(this,
+                                                  new ProjectFileListChangedEvent(newFiles, missingFiles));
         } catch (IOException e) {
-            errorHandler.error(new FileTreeReadingException(projectDirectoryPath, e));
+            throw new FileTreeReadingException(projectDirectoryPath, e);
         }
     }
 
-    public void addProjectFileEventListener(ProjectFileEventsListener listener) {
-        Objects.requireNonNull(listener);
+    public synchronized void deleteFile(Path path) throws FileDeleteExceptionException {
+        Boolean isDirectory = projectFiles.get(path);
+        if (isDirectory == null)
+            return;
 
-        this.fileEditor.addFileOpenedListener((editor) -> listener.projectFileOpened((editor.getFile())));
-        this.fileEditor.addFileClosedListener((editor) -> listener.projectFileClosed((editor.getFile())));
-        this.fileEditor.addFileChangedListener((editor) -> listener.projectFileChanged((editor.getFile())));
-        this.fileEditor.addFileSavedListener((editor) -> listener.projectFileSaved((editor.getFile())));
+        List<Path> filesToDelete = new ArrayList<>();
+        try {
+            if (isDirectory) {
+                Files.walkFileTree(projectDirectoryPath, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
+                        filesToDelete.add(path);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                        filesToDelete.add(path);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } else {
+                filesToDelete.add(path);
+            }
+
+            ListIterator<Path> iterator = filesToDelete.listIterator(filesToDelete.size());
+            while (iterator.hasPrevious()) {
+                Path toRemove = iterator.previous();
+                Files.delete(toRemove);
+                projectFiles.remove(toRemove);
+            }
+            globalEventManager.fireEventListeners(this,
+                                                  new ProjectFileListChangedEvent(new LinkedHashMap<>(),
+                                                                                  new HashSet<>(filesToDelete)));
+        } catch (IOException e) {
+            throw new FileDeleteExceptionException(projectDirectoryPath, e);
+        }
     }
 }

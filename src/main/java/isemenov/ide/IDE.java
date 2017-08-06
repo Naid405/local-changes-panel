@@ -1,71 +1,120 @@
 package isemenov.ide;
 
-import isemenov.ide.event.ConcurrentEventManager;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.ide.ProjectChangedEvent;
-import isemenov.ide.plugin.IDEPlugin;
+import isemenov.ide.event.UnorderedEventManager;
+import isemenov.ide.event.core.AllFilesPossiblyChangedEvent;
+import isemenov.ide.event.core.FilesPossiblyChangedEvent;
+import isemenov.ide.event.core.LoadingCompletedEvent;
+import isemenov.ide.event.core.LoadingStartedEvent;
+import isemenov.ide.event.editor.EditorFileEditedStateChangeEvent;
+import isemenov.ide.event.editor.EditorFileOpenedEvent;
+import isemenov.ide.event.project.ProjectFileListChangedEvent;
+import isemenov.ide.vcs.VCSException;
+import isemenov.ide.vcs.VCSFileStatusTracker;
+import isemenov.ide.vcs.VCSPluginRegistry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.Optional;
+
+import static isemenov.ide.vcs.VCSPluginRegistry.VCS_NAME;
 
 public class IDE {
-    private final ErrorHandler errorHandler;
-    private final EventManager eventManager;
+    private final static Logger logger = LogManager.getLogger(IDE.class);
 
-    private final List<IDEPlugin> plugins;
+    private final EventManager globalIdeEventManager;
+    private final Path projectPath;
 
-    private volatile Project project;
+    private boolean started;
 
-    public IDE(ErrorHandler errorHandler, List<IDEPlugin> plugins) {
-        this.errorHandler = errorHandler;
-        this.eventManager = new ConcurrentEventManager();
-        this.plugins = plugins != null ? plugins : new ArrayList<>();
-        for (IDEPlugin plugin : this.plugins) {
-            this.addProjectChangedListener(e -> plugin.setProject(e.getProject()));
-        }
+    private Project project;
+
+    private MultipleFileEditor fileEditor;
+    private VCSFileStatusTracker fileStatusTracker;
+
+    public IDE(Path projectPath, EventManager globalIdeEventManager) {
+        Objects.requireNonNull(projectPath);
+        Objects.requireNonNull(globalIdeEventManager);
+
+        this.globalIdeEventManager = globalIdeEventManager;
+        this.projectPath = projectPath;
+        this.started = false;
     }
 
-    public boolean isCurrentlyOpenProject(File projectDirectoryPath) {
-        Objects.requireNonNull(projectDirectoryPath);
-
-        Path rootPath = projectDirectoryPath.toPath().normalize();
-        return this.project != null && this.project.getProjectDirectoryPath().compareTo(rootPath) == 0;
-    }
-
-    public void openProject(File projectDirectoryPath) {
-        Objects.requireNonNull(projectDirectoryPath);
-        try {
-            Path rootPath = projectDirectoryPath.toPath().normalize();
-
-            if (!projectDirectoryPath.isDirectory())
-                throw new NotADirectoryException(rootPath);
-
-            FileEditor editor = new FileEditor(errorHandler);
-
-            this.project = new Project(errorHandler, rootPath, editor);
-
-            for (IDEPlugin plugin : plugins) {
-                this.project.addProjectFileEventListener(plugin.getEditorEventsListener());
+    public void start() throws FileTreeReadingException {
+        globalIdeEventManager.fireEventListeners(this, new LoadingStartedEvent());
+        project = new Project(projectPath, globalIdeEventManager);
+        project.readFileTree();
+        globalIdeEventManager.addEventListener(FilesPossiblyChangedEvent.class, e -> {
+            try {
+                project.readFileTree();
+            } catch (FileTreeReadingException e1) {
+                logger.error(e1.getMessage(), e1);
             }
+        });
+        globalIdeEventManager.addEventListener(AllFilesPossiblyChangedEvent.class, e -> {
+            try {
+                project.readFileTree();
+            } catch (FileTreeReadingException e1) {
+                logger.error(e1.getMessage(), e1);
+            }
+        });
 
-            if (!Thread.currentThread().isInterrupted())
-                this.eventManager.fireEventListeners(this, new ProjectChangedEvent(project));
-        } catch (NotADirectoryException e) {
-            errorHandler.error(e);
-        }
+        fileEditor = new MultipleFileEditor(globalIdeEventManager);
+        globalIdeEventManager.addEventListener(ProjectFileListChangedEvent.class, e -> {
+            for (Path path : e.getRemovedFiles()) {
+                fileEditor.closeOpenedFile(path);
+            }
+        });
+
+        VCSPluginRegistry.getBundleForVCS(VCS_NAME).ifPresent(bundle -> {
+            try {
+                fileStatusTracker = new VCSFileStatusTracker(VCS_NAME, project, bundle.getServiceFactory(),
+                                                             new UnorderedEventManager(), globalIdeEventManager);
+                globalIdeEventManager.addEventListener(EditorFileOpenedEvent.class,
+                                                       e -> fileStatusTracker.startTrackingFile(e.getFile()));
+                globalIdeEventManager.addEventListener(EditorFileEditedStateChangeEvent.class,
+                                                       e -> fileStatusTracker.refreshFileStatus(e.getFile()));
+                globalIdeEventManager.addEventListener(FilesPossiblyChangedEvent.class,
+                                                       e -> fileStatusTracker.refreshTrackedFileStatuses(e.getFiles()));
+                globalIdeEventManager.addEventListener(ProjectFileListChangedEvent.class,
+                                                       e -> fileStatusTracker.checkRemovedFiles(e.getRemovedFiles()));
+            } catch (VCSException e) {
+                logger.warn("Could not initialize vcs file status tracker", e);
+            }
+        });
+
+        started = true;
+        globalIdeEventManager.fireEventListeners(this, new LoadingCompletedEvent());
     }
 
-    public List<IDEPlugin> getPlugins() {
-        return Collections.unmodifiableList(plugins);
+    public EventManager getGlobalIdeEventManager() {
+        return globalIdeEventManager;
     }
 
-    public void addProjectChangedListener(Consumer<ProjectChangedEvent> listener) {
-        Objects.requireNonNull(listener);
-        this.eventManager.addEventListener(ProjectChangedEvent.class, listener);
+    public boolean isCurrentlyOpenProject(Path projectDirectoryPath) {
+        Objects.requireNonNull(projectDirectoryPath);
+        return project.getProjectDirectoryPath().compareTo(projectDirectoryPath) == 0;
+    }
+
+    public Project getProject() {
+        if (!started)
+            throw new IDENotStartedException();
+        return project;
+    }
+
+    public MultipleFileEditor getFileEditor() {
+        if (!started)
+            throw new IDENotStartedException();
+        return fileEditor;
+    }
+
+    //Project may not be bound to VCS
+    public Optional<VCSFileStatusTracker> getFileStatusTracker() {
+        if (!started)
+            throw new IDENotStartedException();
+        return Optional.ofNullable(fileStatusTracker);
     }
 }

@@ -7,43 +7,12 @@
     <properties/>
     <border type="none"/>
     <children>
-      <splitpane id="67ffb">
+      <tabbedpane id="4d263" binding="tabbedPane">
         <constraints border-constraint="Center"/>
         <properties/>
         <border type="none"/>
-        <children>
-          <grid id="51d50" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <splitpane position="left"/>
-            </constraints>
-            <properties>
-              <preferredSize width="150" height="0"/>
-            </properties>
-            <border type="none"/>
-            <children>
-              <scrollpane id="6db81">
-                <constraints border-constraint="Center"/>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="a78db" class="javax.swing.JTree" binding="fileTree">
-                    <constraints/>
-                    <properties/>
-                  </component>
-                </children>
-              </scrollpane>
-            </children>
-          </grid>
-          <tabbedpane id="d51f4" binding="tabbedPane">
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </tabbedpane>
-        </children>
-      </splitpane>
+        <children/>
+      </tabbedpane>
     </children>
   </grid>
 </form>

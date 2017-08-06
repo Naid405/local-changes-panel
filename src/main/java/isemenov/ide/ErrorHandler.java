@@ -1,13 +1,11 @@
 package isemenov.ide;
 
-import isemenov.ide.event.ConcurrentEventManager;
+import isemenov.ide.event.UnorderedEventManager;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.ide.error.ErrorLevel;
-import isemenov.ide.event.ide.error.ErrorOccuredEvent;
+import isemenov.ide.event.error.ErrorLevel;
+import isemenov.ide.event.error.ErrorOccuredEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.function.Consumer;
 
 public class ErrorHandler {
     private static final Logger logger = LogManager.getLogger(ErrorHandler.class);
@@ -15,7 +13,7 @@ public class ErrorHandler {
     private final EventManager eventManager;
 
     public ErrorHandler() {
-        this.eventManager = new ConcurrentEventManager();
+        this.eventManager = new UnorderedEventManager();
     }
 
     public void error(Exception e) {
@@ -26,9 +24,5 @@ public class ErrorHandler {
     public void warn(Exception e) {
         logger.warn(e.getMessage());
         eventManager.fireEventListeners(this, new ErrorOccuredEvent(ErrorLevel.WARN, e));
-    }
-
-    public void addErrorListener(Consumer<ErrorOccuredEvent> listener) {
-        eventManager.addEventListener(ErrorOccuredEvent.class, listener);
     }
 }
