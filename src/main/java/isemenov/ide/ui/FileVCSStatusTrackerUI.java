@@ -36,6 +36,38 @@ public class FileVCSStatusTrackerUI {
         $$$setupUI$$$();
     }
 
+    public void updateFileTrackingList(Map<Path, VCSFileStatus> newFiles, Map<Path, VCSFileStatus> changedFiles,
+                                       Set<Path> removedFiles) {
+        SwingUtilities.invokeLater(() -> {
+            fileStatusesList.removeFiles(removedFiles);
+            fileStatusesList.addFiles(newFiles);
+            fileStatusesList.updateVCSStatusesForFiles(changedFiles);
+        });
+    }
+
+    public void updateEditedStatusForFile(Path file, boolean edited) {
+        SwingUtilities.invokeLater(() -> fileStatusesList.updateEditedStatusForFile(file, edited));
+    }
+
+    public WindowFocusListener getWindowsFocusListener() {
+        return new WindowFocusListener() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() {
+                        tracker.refreshAllTrackedFileStatuses();
+                        return null;
+                    }
+                }.execute();
+            }
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+            }
+        };
+    }
+
     public FileVCSStatusTrackerUI(CommonFileActionsFactory commonFileActionsFactory,
                                   VCSFileStatusTracker tracker) {
         this.tracker = tracker;
@@ -55,8 +87,8 @@ public class FileVCSStatusTrackerUI {
         //Getting directly because at this point we already got the bundle to construct tracker
         @SuppressWarnings("ConstantConditions")
         VCSUIActionFactory actionsFactory = VCSPluginRegistry.getBundleForVCS(tracker.getVcsName())
-                                                                                                     .get()
-                                                                                                     .getActionsFactory(tracker.getVcsService());
+                                                             .get()
+                                                             .getActionsFactory(tracker.getVcsService());
 
         fileList.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -89,38 +121,6 @@ public class FileVCSStatusTrackerUI {
         for (Action action : actionsFactory.getCommonActions(tracker)) {
             toolbar.add(new JButton(action));
         }
-    }
-
-    public void updateFileTrackingList(Map<Path, VCSFileStatus> newFiles, Map<Path, VCSFileStatus> changedFiles,
-                                       Set<Path> removedFiles) {
-        SwingUtilities.invokeLater(() -> {
-            fileStatusesList.removeFiles(removedFiles);
-            fileStatusesList.addFiles(newFiles);
-            fileStatusesList.updateVCSStatusesForFiles(changedFiles);
-        });
-    }
-
-    public void updateEditedStatusForFile(Path file, boolean edited) {
-        SwingUtilities.invokeLater(() -> fileStatusesList.updateEditedStatusForFile(file, edited));
-    }
-
-    public WindowFocusListener getWindowsFocusListener() {
-        return new WindowFocusListener() {
-            @Override
-            public void windowGainedFocus(WindowEvent e) {
-                new SwingWorker<Void, Void>() {
-                    @Override
-                    protected Void doInBackground() {
-                        tracker.refreshAllTrackedFileStatuses();
-                        return null;
-                    }
-                }.execute();
-            }
-
-            @Override
-            public void windowLostFocus(WindowEvent e) {
-            }
-        };
     }
 
     /**

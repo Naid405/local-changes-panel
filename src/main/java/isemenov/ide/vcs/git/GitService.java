@@ -111,7 +111,6 @@ public class GitService implements VCSService {
         return Collections.unmodifiableMap(map);
     }
 
-    //TODO: handle error more precisely
     @Override
     public boolean checkExists(Path file) throws VCSException {
         try {

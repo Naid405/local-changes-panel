@@ -3,13 +3,14 @@ package isemenov.ide;
 import isemenov.ide.event.EventManager;
 import isemenov.ide.event.UnorderedEventManager;
 import isemenov.ide.event.project.ProjectFileListChangedEvent;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -40,6 +41,30 @@ public class ProjectTest {
         correctMap.put(nestedFile2 = Files.createTempFile(nestedDir, "", ""), false);
 
         eventManager.addEventListener(ProjectFileListChangedEvent.class, eventValidator);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        List<Path> filesToDelete = new ArrayList<>();
+        Files.walkFileTree(rootDirectory, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
+                filesToDelete.add(path);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                filesToDelete.add(path);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        //Walk in reverse order to delete directories too
+        ListIterator<Path> iterator = filesToDelete.listIterator(filesToDelete.size());
+        while (iterator.hasPrevious()) {
+            Files.delete(iterator.previous());
+        }
     }
 
     @Test
@@ -148,6 +173,7 @@ public class ProjectTest {
 
     @Test
     public void deleteFile() throws Exception {
+        project.readFileTree();
         //region delete file
         project.deleteFile(file1);
         correctMap.remove(file1);
@@ -168,7 +194,8 @@ public class ProjectTest {
         Assert.assertTrue(!Files.exists(nestedFile1));
         Assert.assertTrue(!Files.exists(nestedFile2));
         Assert.assertEquals(new HashMap<>(), eventValidator.newFiles);
-        Assert.assertEquals(new HashSet<>(Arrays.asList(nestedDir, nestedFile1, nestedFile2)), eventValidator.removedFiles);
+        Assert.assertEquals(new HashSet<>(Arrays.asList(nestedDir, nestedFile1, nestedFile2)),
+                            eventValidator.removedFiles);
         Assert.assertEquals(project.getProjectFiles(), correctMap);
         //endregion
     }

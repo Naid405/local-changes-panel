@@ -44,7 +44,7 @@ public class Project {
      *
      * @throws FileTreeReadingException if failed to read from FS
      */
-    public synchronized void readFileTree() throws FileTreeReadingException {
+    public void readFileTree() throws FileTreeReadingException {
         final Set<Path> missingFiles = new HashSet<>(projectFiles.keySet());
 
         final LinkedHashMap<Path, Boolean> newFiles = new LinkedHashMap<>();
@@ -69,13 +69,12 @@ public class Project {
                 }
             });
 
-            for (Path file : missingFiles) {
-                projectFiles.remove(file);
+            synchronized (this) {
+                projectFiles.keySet().removeAll(missingFiles);
+                projectFiles.putAll(newFiles);
+                globalEventManager.fireEventListeners(this,
+                                                      new ProjectFileListChangedEvent(newFiles, missingFiles));
             }
-            projectFiles.putAll(newFiles);
-
-            globalEventManager.fireEventListeners(this,
-                                                  new ProjectFileListChangedEvent(newFiles, missingFiles));
         } catch (IOException e) {
             throw new FileTreeReadingException(projectDirectoryPath, e);
         }
@@ -88,7 +87,7 @@ public class Project {
      * @param path to delete
      * @throws FileTreeReadingException if failed to collect filetree information
      */
-    public synchronized void deleteFile(Path path) throws FileTreeReadingException, CannotDeleteFilesException {
+    public void deleteFile(Path path) throws FileTreeReadingException, CannotDeleteFilesException {
         Boolean isDirectory = projectFiles.get(path);
         if (isDirectory == null)
             return;
@@ -97,7 +96,7 @@ public class Project {
 
         if (isDirectory) {
             try {
-                Files.walkFileTree(projectDirectoryPath, new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
                         filesToDelete.add(path);
@@ -120,20 +119,22 @@ public class Project {
         //Walk in reverse order to delete directories too
         ListIterator<Path> iterator = filesToDelete.listIterator(filesToDelete.size());
         Set<Path> failedToDelete = new HashSet<>();
-        while (iterator.hasPrevious()) {
-            Path toDelete = iterator.previous();
-            try {
-                Files.delete(toDelete);
-            } catch (IOException e1) {
-                logger.warn("Cannot delete file " + toDelete, e1);
-                filesToDelete.remove(toDelete);
-                failedToDelete.add(toDelete);
+        synchronized (this) {
+            while (iterator.hasPrevious()) {
+                Path toDelete = iterator.previous();
+                try {
+                    Files.delete(toDelete);
+                } catch (IOException e1) {
+                    logger.warn("Cannot delete file " + toDelete, e1);
+                    filesToDelete.remove(toDelete);
+                    failedToDelete.add(toDelete);
+                }
+                projectFiles.remove(toDelete);
             }
-            projectFiles.remove(toDelete);
+            globalEventManager.fireEventListeners(this,
+                                                  new ProjectFileListChangedEvent(new LinkedHashMap<>(),
+                                                                                  new HashSet<>(filesToDelete)));
         }
-        globalEventManager.fireEventListeners(this,
-                                              new ProjectFileListChangedEvent(new LinkedHashMap<>(),
-                                                                              new HashSet<>(filesToDelete)));
         if (failedToDelete.size() > 0)
             throw new CannotDeleteFilesException(failedToDelete);
     }

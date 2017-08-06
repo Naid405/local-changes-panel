@@ -5,19 +5,19 @@ import isemenov.ide.event.editor.EditorFileClosedEvent;
 import isemenov.ide.event.editor.EditorFileOpenedEvent;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class MultipleFileEditor {
     private final EventManager globalEventManager;
 
-    private final Map<Path, FileEditor> openedFiles;
+    private final ConcurrentMap<Path, FileEditor> openedFiles;
 
     public MultipleFileEditor(EventManager globalEventManager) {
         Objects.requireNonNull(globalEventManager);
         this.globalEventManager = globalEventManager;
-        this.openedFiles = new HashMap<>();
+        this.openedFiles = new ConcurrentHashMap<>();
     }
 
     public boolean hasOpenFiles() {
@@ -27,10 +27,10 @@ public class MultipleFileEditor {
     /**
      * Open file in editor
      *
-     * @param file file to be opened
+     * @param file to open
      * @return true in file was opened, false if file was already open
      */
-    public synchronized boolean openFile(Path file) {
+    public boolean openFile(Path file) {
         Objects.requireNonNull(file);
         if (file.toFile().isDirectory())
             throw new IllegalArgumentException("Cannot open directory in editor");
@@ -39,22 +39,23 @@ public class MultipleFileEditor {
             return false;
 
         FileEditor editor = new FileEditor(file.toAbsolutePath(), globalEventManager);
-
-        if (openedFiles.putIfAbsent(file, editor) != editor) {
+        return openedFiles.computeIfAbsent(file, path -> {
             globalEventManager.fireEventListeners(this, new EditorFileOpenedEvent(file, editor));
-            return true;
-        } else {
-            return false;
-        }
+            return editor;
+        }) == editor;
     }
 
-    public synchronized void closeOpenedFile(Path file) {
+    /**
+     * Close file if it is open
+     *
+     * @param file to close
+     */
+    public void closeOpenedFile(Path file) {
         Objects.requireNonNull(file);
-
-        FileEditor editor = openedFiles.remove(file);
-        if (editor != null) {
+        openedFiles.computeIfPresent(file, (path, editor) -> {
             editor.setEditedState(false);
             this.globalEventManager.fireEventListeners(this, new EditorFileClosedEvent(file));
-        }
+            return null;
+        });
     }
 }
