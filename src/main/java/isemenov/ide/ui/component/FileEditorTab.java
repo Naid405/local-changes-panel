@@ -63,7 +63,8 @@ public class FileEditorTab extends JPanel {
             }
         }.execute();
 
-        textPane.registerKeyboardAction(saveFileActionListener, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK),
+        textPane.registerKeyboardAction(saveFileActionListener,
+                                        KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK),
                                         WHEN_FOCUSED);
 
         this.add(new JScrollPane(textPane), BorderLayout.CENTER);

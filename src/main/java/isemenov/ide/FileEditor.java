@@ -15,7 +15,7 @@ public class FileEditor {
     /**
      * Create editor for file
      *
-     * @param filePath path to file
+     * @param filePath           path to file
      * @param globalEventManager local event manager to handle model-ui events and export file edit events
      */
     public FileEditor(Path filePath, EventManager globalEventManager) {

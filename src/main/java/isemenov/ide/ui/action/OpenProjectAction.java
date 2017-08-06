@@ -85,7 +85,7 @@ public class OpenProjectAction extends AbstractAction {
         }
     }
 
-    private void closePrevious(){
+    private void closePrevious() {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 }

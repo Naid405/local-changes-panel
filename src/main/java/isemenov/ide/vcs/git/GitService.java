@@ -244,16 +244,6 @@ public class GitService implements VCSService {
         }
     }
 
-    public enum UpdateType {
-        MERGE,
-        REBASE
-    }
-
-    public enum CleanTreeType {
-        STASH,
-        NO
-    }
-
     public void commitFiles(String commitMessage, Set<Path> filesToCommit) throws CannotExecuteVCSOperation,
                                                                                   FileNotInWorkingTreeException {
         try {
@@ -297,5 +287,15 @@ public class GitService implements VCSService {
         } catch (IllegalArgumentException e) {
             throw new FileNotInWorkingTreeException(workDirPath, path);
         }
+    }
+
+    public enum UpdateType {
+        MERGE,
+        REBASE
+    }
+
+    public enum CleanTreeType {
+        STASH,
+        NO
     }
 }

@@ -11,14 +11,13 @@ import java.util.Optional;
  */
 public class VCSPluginRegistry {
     public final static String VCS_NAME = "git";
-
-    private VCSPluginRegistry() {
-    }
-
     private final static Map<String, VCSPluginBungle> PLUGIN_BUNGLE_MAP = new HashMap<>();
 
     static {
         PLUGIN_BUNGLE_MAP.put(VCS_NAME, new GitBundle());
+    }
+
+    private VCSPluginRegistry() {
     }
 
     public static Optional<VCSPluginBungle> getBundleForVCS(String vcsName) {
