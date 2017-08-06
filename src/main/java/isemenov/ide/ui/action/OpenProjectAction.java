@@ -5,6 +5,7 @@ import isemenov.ide.event.EventManager;
 import isemenov.ide.event.UnorderedEventManager;
 import isemenov.ide.event.core.LoadingCompletedEvent;
 import isemenov.ide.event.core.LoadingStartedEvent;
+import isemenov.ide.ui.ErrorHandlerUI;
 import isemenov.ide.ui.IDEUI;
 
 import javax.swing.*;
@@ -45,11 +46,13 @@ public class OpenProjectAction extends AbstractAction {
             if (file == null)
                 return;
 
-            if (!file.isDirectory())
+            if (!file.isDirectory()) {
                 JOptionPane.showMessageDialog(frame,
                                               "Please select directory",
                                               "Not a directory",
                                               JOptionPane.ERROR_MESSAGE);
+                closePrevious();
+            }
 
             Path projectPath = file.toPath().normalize();
 
@@ -63,7 +66,7 @@ public class OpenProjectAction extends AbstractAction {
             globalEventManager.addEventListener(LoadingCompletedEvent.class, event -> ui.initialize());
 
             //Close previous IDE instance
-            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+            closePrevious();
             ui.setVisible(true);
             new SwingWorker<Void, Void>() {
                 @Override
@@ -71,17 +74,19 @@ public class OpenProjectAction extends AbstractAction {
                     try {
                         ide.start();
                     } catch (Exception e) {
-                        JOptionPane.showMessageDialog(ui,
-                                                      e.getMessage(),
-                                                      "Failed to open project",
-                                                      JOptionPane.ERROR_MESSAGE);
+                        ErrorHandlerUI.showError(e);
+                        ui.dispatchEvent(new WindowEvent(ui, WindowEvent.WINDOW_CLOSING));
                     }
                     return null;
                 }
             }.execute();
         } else {
             if (initial)
-                frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+                closePrevious();
         }
+    }
+
+    private void closePrevious(){
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 }
