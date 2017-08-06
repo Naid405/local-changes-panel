@@ -13,11 +13,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
 public class FileVCSStatusTrackerUI {
+    private final VCSFileStatusTracker tracker;
+
     private JPanel mainPanel;
     private JList<FileVCSStatus> fileList;
     private JButton refreshButton;
@@ -27,6 +31,7 @@ public class FileVCSStatusTrackerUI {
 
     public FileVCSStatusTrackerUI(CommonFileActionsFactory commonFileActionsFactory,
                                   VCSFileStatusTracker tracker) {
+        this.tracker = tracker;
         this.fileStatusesList = new VSCFileStatusesList();
         fileList.setModel(fileStatusesList);
         //So that it is selected via right click too
@@ -89,6 +94,19 @@ public class FileVCSStatusTrackerUI {
 
     public void updateEditedStatusForFile(Path file, boolean edited) {
         SwingUtilities.invokeLater(() -> fileStatusesList.updateEditedStatusForFile(file, edited));
+    }
+
+    public WindowFocusListener getWindowsFocusListener() {
+        return new WindowFocusListener() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                tracker.refreshAllTrackedFileStatuses();
+            }
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+            }
+        };
     }
 
     {

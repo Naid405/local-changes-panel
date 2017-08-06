@@ -86,6 +86,7 @@ public class IDEUI extends JFrame {
                 globalEventManager.addEventListener(EditorFileEditedStateChangeEvent.class,
                                                     e -> fileStatusTrackerUI
                                                             .updateEditedStatusForFile(e.getFile(), e.isEdited()));
+                addWindowFocusListener(fileStatusTrackerUI.getWindowsFocusListener());
                 fileStatusTrackerPanel.add(fileStatusTrackerUI.$$$getRootComponent$$$());
             } else {
                 fileStatusTrackerPanel.add(new JLabel("Project is not bound to VCS", SwingConstants.CENTER));
