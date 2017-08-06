@@ -12,12 +12,11 @@ import isemenov.ide.event.project.ProjectFileListChangedEvent;
 import isemenov.ide.event.vcs.VCSTrackingListChangedEvent;
 import isemenov.ide.ui.action.CommonFileActionsFactory;
 import isemenov.ide.ui.action.OpenProjectAction;
+import isemenov.ide.vcs.VCSFileStatusTracker;
 
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public class IDEUI extends JFrame {
     private final IDE ide;
@@ -75,7 +74,8 @@ public class IDEUI extends JFrame {
                                                 e -> projectViewUI
                                                         .updateFileTree(e.getRemovedFiles(), e.getNewFiles()));
 
-            ide.getFileStatusTracker().ifPresent(tracker -> {
+            if (ide.getFileStatusTracker().isPresent()) {
+                VCSFileStatusTracker tracker = ide.getFileStatusTracker().get();
                 fileStatusTrackerUI = new FileVCSStatusTrackerUI(fileActionsFactory, tracker);
                 tracker.getEventManager().addEventListener(VCSTrackingListChangedEvent.class,
                                                            e -> fileStatusTrackerUI.updateFileTrackingList(
@@ -87,7 +87,9 @@ public class IDEUI extends JFrame {
                                                     e -> fileStatusTrackerUI
                                                             .updateEditedStatusForFile(e.getFile(), e.isEdited()));
                 fileStatusTrackerPanel.add(fileStatusTrackerUI.$$$getRootComponent$$$());
-            });
+            } else {
+                fileStatusTrackerPanel.add(new JLabel("Project is not bound to VCS", SwingConstants.CENTER));
+            }
 
             JMenuBar applicationMenu = new JMenuBar();
             JMenu fileMenu = new JMenu("File");

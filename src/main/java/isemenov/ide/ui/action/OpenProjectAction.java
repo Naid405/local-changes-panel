@@ -14,21 +14,21 @@ import java.io.File;
 import java.nio.file.Path;
 
 public class OpenProjectAction extends AbstractAction {
-    private final boolean closePrevious;
+    private final boolean initial;
     private final JFrame frame;
     private final IDE currentIde;
 
     public OpenProjectAction() {
         super("Open Project");
         this.currentIde = null;
-        this.closePrevious = true;
+        this.initial = true;
         this.frame = new JFrame("temp");
         this.frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     public OpenProjectAction(IDEUI currentUI, IDE currentIde) {
         super("Open Project");
-        this.closePrevious = false;
+        this.initial = false;
         this.currentIde = currentIde;
         this.frame = currentUI;
     }
@@ -63,8 +63,7 @@ public class OpenProjectAction extends AbstractAction {
             globalEventManager.addEventListener(LoadingCompletedEvent.class, event -> ui.initialize());
 
             //Close previous IDE instance
-            if (closePrevious)
-                frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
             ui.setVisible(true);
             new SwingWorker<Void, Void>() {
                 @Override
@@ -81,7 +80,7 @@ public class OpenProjectAction extends AbstractAction {
                 }
             }.execute();
         } else {
-            if (closePrevious)
+            if (initial)
                 frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
         }
     }
