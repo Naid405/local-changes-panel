@@ -2,7 +2,7 @@ package isemenov.ide.ui.action;
 
 import isemenov.ide.IDE;
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.UnorderedEventManager;
+import isemenov.ide.event.OrderedEventManager;
 import isemenov.ide.event.core.LoadingCompletedEvent;
 import isemenov.ide.event.core.LoadingStartedEvent;
 import isemenov.ide.ui.ErrorHandlerUI;
@@ -60,7 +60,7 @@ public class OpenProjectAction extends AbstractAction {
             if (currentIde != null && currentIde.isCurrentlyOpenProject(projectPath))
                 return;
 
-            EventManager globalEventManager = new UnorderedEventManager();
+            EventManager globalEventManager = new OrderedEventManager();
             IDE ide = new IDE(projectPath, globalEventManager, new StaticVCSPluginRegistry());
             IDEUI ui = new IDEUI(ide);
             globalEventManager.addEventListener(LoadingStartedEvent.class, event -> ui.showLoading());

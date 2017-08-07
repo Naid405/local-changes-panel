@@ -1,7 +1,7 @@
 package isemenov.ide;
 
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.UnorderedEventManager;
+import isemenov.ide.event.OrderedEventManager;
 import isemenov.ide.event.core.AllFilesPossiblyChangedEvent;
 import isemenov.ide.event.core.FilesPossiblyChangedEvent;
 import isemenov.ide.event.core.LoadingCompletedEvent;
@@ -73,7 +73,7 @@ public class IDE {
         vcsPluginRegistry.getBundleForVCS(VCS_NAME).ifPresent(bundle -> {
             try {
                 fileStatusTracker = new VCSFileStatusTracker(VCS_NAME, project, bundle.getServiceFactory(),
-                                                             new UnorderedEventManager(), globalIdeEventManager);
+                                                             new OrderedEventManager(), globalIdeEventManager);
                 globalIdeEventManager.addEventListener(EditorFileOpenedEvent.class,
                                                        e -> fileStatusTracker.startTrackingFile(e.getFile()));
                 globalIdeEventManager.addEventListener(EditorFileEditedStateChangeEvent.class,

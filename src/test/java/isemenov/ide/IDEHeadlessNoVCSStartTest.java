@@ -1,7 +1,7 @@
 package isemenov.ide;
 
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.UnorderedEventManager;
+import isemenov.ide.event.OrderedEventManager;
 import isemenov.ide.vcs.StaticVCSPluginRegistry;
 import isemenov.ide.vcs.VCSPluginBungle;
 import org.junit.After;
@@ -20,7 +20,7 @@ public class IDEHeadlessNoVCSStartTest {
     @Before
     public void setUp() throws Exception {
         rootDirectory = Files.createTempDirectory(Paths.get("target"), "projectTest");
-        EventManager eventManager = new UnorderedEventManager();
+        EventManager eventManager = new OrderedEventManager();
 
         ide = new IDE(rootDirectory, eventManager, new StaticVCSPluginRegistry() {
             @Override

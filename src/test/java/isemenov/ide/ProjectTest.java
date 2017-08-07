@@ -1,7 +1,7 @@
 package isemenov.ide;
 
 import isemenov.ide.event.EventManager;
-import isemenov.ide.event.UnorderedEventManager;
+import isemenov.ide.event.OrderedEventManager;
 import isemenov.ide.event.project.ProjectFileListChangedEvent;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,7 +29,7 @@ public class ProjectTest {
     @Before
     public void setUp() throws Exception {
         rootDirectory = Files.createTempDirectory(Paths.get("target"), "projectTest");
-        EventManager eventManager = new UnorderedEventManager();
+        EventManager eventManager = new OrderedEventManager();
         project = new Project(rootDirectory, eventManager);
         eventValidator = new ChangeEventValidator();
         correctMap = new LinkedHashMap<>();
