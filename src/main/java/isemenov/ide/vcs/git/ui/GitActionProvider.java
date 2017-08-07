@@ -25,7 +25,9 @@ public class GitActionProvider implements VCSUIActionFactory {
     @Override
     public List<Action> getCommonActions(VCSFileStatusTracker tracker) {
         ArrayList<Action> actions = new ArrayList<>();
-        actions.add(new AbstractAction(null, new ImageIcon(this.getClass().getResource("/icons/upload-button.png"))) {
+        actions.add(new AbstractAction(null,
+                                       new ImageIcon(this.getClass().getResource("/icons/upload-button.png"),
+                                                     "Commit")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Map<Path, VCSFileStatus> trackedFiles = tracker.getTrackedFiles();
@@ -45,7 +47,9 @@ public class GitActionProvider implements VCSUIActionFactory {
                 commitDialog.setVisible(true);
             }
         });
-        actions.add(new AbstractAction(null, new ImageIcon(this.getClass().getResource("/icons/download-button.png"))) {
+        actions.add(new AbstractAction(null,
+                                       new ImageIcon(this.getClass().getResource("/icons/download-button.png"),
+                                                     "Update")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 GitUpdateDialog updateDialog = new GitUpdateDialog(service);
