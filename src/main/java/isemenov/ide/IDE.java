@@ -9,9 +9,9 @@ import isemenov.ide.event.core.LoadingStartedEvent;
 import isemenov.ide.event.editor.EditorFileEditedStateChangeEvent;
 import isemenov.ide.event.editor.EditorFileOpenedEvent;
 import isemenov.ide.event.project.ProjectFileListChangedEvent;
+import isemenov.ide.vcs.StaticVCSPluginRegistry;
 import isemenov.ide.vcs.VCSException;
 import isemenov.ide.vcs.VCSFileStatusTracker;
-import isemenov.ide.vcs.VCSPluginRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,12 +19,13 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static isemenov.ide.vcs.VCSPluginRegistry.VCS_NAME;
+import static isemenov.ide.vcs.StaticVCSPluginRegistry.VCS_NAME;
 
 public class IDE {
     private final static Logger logger = LogManager.getLogger(IDE.class);
 
     private final EventManager globalIdeEventManager;
+    private final StaticVCSPluginRegistry vcsPluginRegistry;
     private final Path projectPath;
 
     private volatile boolean started;
@@ -33,7 +34,8 @@ public class IDE {
     private volatile MultipleFileEditor fileEditor;
     private volatile VCSFileStatusTracker fileStatusTracker;
 
-    public IDE(Path projectPath, EventManager globalIdeEventManager) {
+    public IDE(Path projectPath, EventManager globalIdeEventManager, StaticVCSPluginRegistry vcsPluginRegistry) {
+        this.vcsPluginRegistry = vcsPluginRegistry;
         Objects.requireNonNull(projectPath);
         Objects.requireNonNull(globalIdeEventManager);
 
@@ -68,7 +70,7 @@ public class IDE {
             }
         });
 
-        VCSPluginRegistry.getBundleForVCS(VCS_NAME).ifPresent(bundle -> {
+        vcsPluginRegistry.getBundleForVCS(VCS_NAME).ifPresent(bundle -> {
             try {
                 fileStatusTracker = new VCSFileStatusTracker(VCS_NAME, project, bundle.getServiceFactory(),
                                                              new UnorderedEventManager(), globalIdeEventManager);
@@ -91,6 +93,10 @@ public class IDE {
 
     public EventManager getGlobalIdeEventManager() {
         return globalIdeEventManager;
+    }
+
+    public StaticVCSPluginRegistry getVcsPluginRegistry() {
+        return vcsPluginRegistry;
     }
 
     public boolean isCurrentlyOpenProject(Path projectDirectoryPath) {

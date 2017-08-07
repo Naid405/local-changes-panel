@@ -76,7 +76,8 @@ public class IDEUI extends JFrame {
 
             if (ide.getFileStatusTracker().isPresent()) {
                 VCSFileStatusTracker tracker = ide.getFileStatusTracker().get();
-                fileStatusTrackerUI = new FileVCSStatusTrackerUI(fileActionsFactory, tracker);
+                fileStatusTrackerUI = new FileVCSStatusTrackerUI(fileActionsFactory, ide.getVcsPluginRegistry(),
+                                                                 tracker);
                 tracker.getEventManager().addEventListener(VCSTrackingListChangedEvent.class,
                                                            e -> fileStatusTrackerUI.updateFileTrackingList(
                                                                    e.getAddedFiles(),

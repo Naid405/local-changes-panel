@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Not a "real world" class. Should be substituted by "plugin loader" in real implementation.
  */
-public class VCSPluginRegistry {
+public class StaticVCSPluginRegistry {
     public final static String VCS_NAME = "git";
     private final static Map<String, VCSPluginBungle> PLUGIN_BUNGLE_MAP = new HashMap<>();
 
@@ -17,10 +17,10 @@ public class VCSPluginRegistry {
         PLUGIN_BUNGLE_MAP.put(VCS_NAME, new GitBundle());
     }
 
-    private VCSPluginRegistry() {
+    public StaticVCSPluginRegistry() {
     }
 
-    public static Optional<VCSPluginBungle> getBundleForVCS(String vcsName) {
+    public Optional<VCSPluginBungle> getBundleForVCS(String vcsName) {
         return Optional.ofNullable(PLUGIN_BUNGLE_MAP.get(vcsName));
     }
 }

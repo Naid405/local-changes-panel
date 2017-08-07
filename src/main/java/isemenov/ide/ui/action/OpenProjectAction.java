@@ -7,6 +7,7 @@ import isemenov.ide.event.core.LoadingCompletedEvent;
 import isemenov.ide.event.core.LoadingStartedEvent;
 import isemenov.ide.ui.ErrorHandlerUI;
 import isemenov.ide.ui.IDEUI;
+import isemenov.ide.vcs.StaticVCSPluginRegistry;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -60,7 +61,7 @@ public class OpenProjectAction extends AbstractAction {
                 return;
 
             EventManager globalEventManager = new UnorderedEventManager();
-            IDE ide = new IDE(projectPath, globalEventManager);
+            IDE ide = new IDE(projectPath, globalEventManager, new StaticVCSPluginRegistry());
             IDEUI ui = new IDEUI(ide);
             globalEventManager.addEventListener(LoadingStartedEvent.class, event -> ui.showLoading());
             globalEventManager.addEventListener(LoadingCompletedEvent.class, event -> ui.initialize());
