@@ -44,7 +44,7 @@ public class Project {
      *
      * @throws FileTreeReadingException if failed to read from FS
      */
-    public void readFileTree() throws FileTreeReadingException {
+    public synchronized void readFileTree() throws FileTreeReadingException {
         final Set<Path> missingFiles = new HashSet<>(projectFiles.keySet());
 
         final LinkedHashMap<Path, Boolean> newFiles = new LinkedHashMap<>();
@@ -69,12 +69,11 @@ public class Project {
                 }
             });
 
-            synchronized (this) {
-                projectFiles.keySet().removeAll(missingFiles);
-                projectFiles.putAll(newFiles);
-                globalEventManager.fireEventListeners(this,
-                                                      new ProjectFileListChangedEvent(newFiles, missingFiles));
-            }
+            projectFiles.keySet().removeAll(missingFiles);
+            projectFiles.putAll(newFiles);
+            globalEventManager.fireEventListeners(this,
+                                                  new ProjectFileListChangedEvent(newFiles, missingFiles));
+
         } catch (IOException e) {
             throw new FileTreeReadingException(projectDirectoryPath, e);
         }
