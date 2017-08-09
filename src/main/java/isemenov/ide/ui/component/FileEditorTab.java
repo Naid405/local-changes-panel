@@ -80,6 +80,7 @@ public class FileEditorTab extends JPanel {
             documentEditsObserver.reset();
             textPane.getDocument().addDocumentListener(documentEditsObserver);
         } catch (IOException e) {
+            textPane.setEnabled(false);
             throw new FileReadingException(filePath, e);
         }
     }

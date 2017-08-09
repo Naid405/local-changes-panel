@@ -45,11 +45,12 @@ public class TabbedFileEditorUI {
                                 }
                             }.execute());
 
-                    tabbedPane.addTab(editor.getFilePath().getFileName().toString(), editorTab);
-                    tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, editorTab.getTabHeader());
-                    tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
                     try {
                         editorTab.readFile();
+
+                        tabbedPane.addTab(editor.getFilePath().getFileName().toString(), editorTab);
+                        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, editorTab.getTabHeader());
+                        tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
                     } catch (FileReadingException e) {
                         ErrorHandlerUI.showError(e);
                     }
