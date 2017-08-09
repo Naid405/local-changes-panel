@@ -35,12 +35,13 @@ public class IDE {
     private volatile VCSFileStatusTracker fileStatusTracker;
 
     public IDE(Path projectPath, EventManager globalIdeEventManager, StaticVCSPluginRegistry vcsPluginRegistry) {
-        this.vcsPluginRegistry = vcsPluginRegistry;
         Objects.requireNonNull(projectPath);
         Objects.requireNonNull(globalIdeEventManager);
+        Objects.requireNonNull(vcsPluginRegistry);
 
-        this.globalIdeEventManager = globalIdeEventManager;
         this.projectPath = projectPath;
+        this.globalIdeEventManager = globalIdeEventManager;
+        this.vcsPluginRegistry = vcsPluginRegistry;
         this.started = false;
     }
 

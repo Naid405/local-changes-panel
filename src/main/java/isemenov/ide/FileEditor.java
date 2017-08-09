@@ -4,6 +4,7 @@ import isemenov.ide.event.EventManager;
 import isemenov.ide.event.editor.EditorFileEditedStateChangeEvent;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * "Utility" class to incorporate UI-bound editor into IDE without tying it to specific UI implementation
@@ -19,6 +20,9 @@ public class FileEditor {
      * @param globalEventManager local event manager to handle model-ui events and export file edit events
      */
     public FileEditor(Path filePath, EventManager globalEventManager) {
+        Objects.requireNonNull(filePath);
+        Objects.requireNonNull(globalEventManager);
+
         this.filePath = filePath;
         this.globalEventManager = globalEventManager;
     }
